@@ -1,5 +1,6 @@
 export class Cell {
 	constructor(row, col, value) {
+		this.id = `${row}-${col}`;
 		this.row = row;
 		this.col = col;
 		this.value = value; // 🚗 ⛽

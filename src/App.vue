@@ -2,7 +2,7 @@
 	<div class="game-board">
 		<h1>Charge Up</h1>
 		<div ref="cellElements" class="game-board-cells" @mousemove="clicking">
-			<div v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell" class="game-cell"
+			<div v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
 				@mousedown="cellClicked"
 				:class="{
           visible: cell.displayValue,
@@ -11,8 +11,9 @@
         }">
 				<span v-if="cell.displayValue === 'charge'" class="emoji">⛽</span>
 				<span v-else-if="cell.displayValue === 'car'" class="emoji">{{ cell.carIcon }}</span>
-				<span v-if="cell.displayValue" class="emoji">&nbsp;</span>
-				<span v-else>{{ cell.row }}, {{ cell.col }}</span>
+				<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
+				<!-- <span v-else>{{ cell.row }}, {{ cell.col }}</span> -->
+				<span v-else>&nbsp;</span>
 			</div>
 		</div>
 		<div class="row-count-cells">
@@ -53,15 +54,19 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { Board } from './classes/Board';
-import basicBoard from './assets/basicBoard';
+// import basicBoard from './assets/basicBoard';
 
 const cellElements = ref(null);
 
 // max without scroll is 11x20 or 17x13
 // standard sizes are 5x7, 7x10, and 10x14
-const rows = basicBoard.length;
-const cols = basicBoard[0].length;
-const game = ref(new Board(basicBoard));
+
+// const rows = basicBoard.length;
+// const cols = basicBoard[0].length;
+// const game = ref(new Board(basicBoard));
+const rows = 5;
+const cols = 7;
+const game = ref(new Board(rows, cols));
 
 function toggleHoverClass(e, type, i) {
 	const rowCol = (type === 'row') ? game.value.getRow(i) : game.value.getCol(i);
@@ -100,6 +105,8 @@ function editCell(cell, value) {
 		} else if (check === "wrong") {
 			alert('Wrong!');
 		}
+		console.log(game.value.getAs('value'));
+		console.log(game.value.getAs('correct'));
 	}, 50);
 }
 
@@ -253,7 +260,7 @@ h1 {
 .control-group .control label {
 	display: block;
 	cursor: pointer;
-	background: #444;
+	background: #111;
 	color: #fff;
 	padding: 3px;
 	border-radius: 5px;
@@ -266,7 +273,7 @@ h1 {
 }
 
 .control-group .control label.selected {
-	background: #111;
+	background: #444;
 }
 
 .game-board-cells,
@@ -286,17 +293,17 @@ h1 {
 }
 
 .row-count-cells {
-	grid-template-rows: repeat(v-bind('rows'), 1fr);
+	grid-template-rows: repeat(v-bind('rows'), minmax(0, 1fr));
 }
 
 .game-board-cells {
-	grid-template-columns: repeat(v-bind('cols'), 1fr);
-	grid-template-rows: repeat(v-bind('rows'), 1fr);
+	grid-template-columns: repeat(v-bind('cols'), minmax(0, 1fr));
+	grid-template-rows: repeat(v-bind('rows'), minmax(0, 1fr));
 	background: #333;
 }
 
 .col-count-cells {
-	grid-template-columns: repeat(v-bind('cols'), 1fr);
+	grid-template-columns: repeat(v-bind('cols'), minmax(0, 1fr));
 }
 
 .row-count,
