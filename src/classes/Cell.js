@@ -1,3 +1,5 @@
+const carIcons = ["🚗", "🚙"];
+
 export class Cell {
 	constructor(row, col, value) {
 		this.id = `${row}-${col}`;
@@ -8,7 +10,7 @@ export class Cell {
 		this.element = null;
 		this.hover = false;
 		this.displayValue = null;
-		this.carIcon = (Math.random() < 0.5) ? "🚗" : "🚙";
+		this.carIcon = carIcons[Math.floor(Math.random() * carIcons.length)];
 	}
 
 	display(value) {
