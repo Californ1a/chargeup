@@ -156,12 +156,20 @@ export class Board {
 					this.setCell(cell.row, cell.col, 'road');
 				}
 			}
-			// console.log(this.getFlatCells().filter(cell => cell.value === null).length);
-			// console.log(this.cells);
 		}
+
+		// Set remaining cells to be road
 		const remainingCells = this.getFlatCells().filter(cell => cell.value === null);
 		for (const cell of remainingCells) {
 			this.setCell(cell.row, cell.col, 'road');
+		}
+
+		// Sometimes remove a few random chargers
+		const chargers = this.getFlatCells().filter(cell => cell.value === 'charge');
+		const chargersToRemove = Math.floor(chargers.length * 0.1);
+		for (let i = 0; i < chargersToRemove; i++) {
+			const randomCharger = chargers[Math.floor(Math.random() * chargers.length)];
+			this.setCell(randomCharger.row, randomCharger.col, 'road');
 		}
 	}
 	getAs(type) {

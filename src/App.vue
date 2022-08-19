@@ -35,24 +35,13 @@
 			</div>
 			<!-- <div class="col-count empty"></div> -->
 		</div>
-		<div class="controls">
-			<div class="control-group">
-				<label for="mode">Mode</label>
-				<div class="control">
-					<input type="radio" id="car" value="car" v-model="mode" />
-					<label for="car" :class="{selected:mode==='car'}">Car</label>
-				</div>
-				<div class="control">
-					<input type="radio" id="road" value="road" v-model="mode" />
-					<label for="road" :class="{selected:mode==='road'}">Road</label>
-				</div>
-			</div>
-		</div>
+		<GameControls :mode="mode" @update:modelValue="updateMode" />
 	</div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import GameControls from './components/GameControls.vue';
 import { Board } from './classes/Board';
 // import basicBoard from './assets/basicBoard';
 
@@ -94,6 +83,10 @@ function toggleHoverClass(e, type, i) {
 
 const mode = ref('road');
 let markMode = true;
+
+function updateMode(newMode) {
+	mode.value = newMode;
+}
 
 function editCell(cell, value) {
 	cell.display(value);
@@ -203,77 +196,6 @@ h1 {
 	text-align: center;
 	font-size: 2rem;
 	padding: 0.5rem;
-}
-
-.controls {
-	padding-top: 15px;
-	grid-area: controls;
-	color: #fff;
-	text-align: center;
-	font-size: 1rem;
-	justify-content: center;
-	align-items: center;
-	display: flex;
-	user-select: none;
-}
-
-.control-group {
-	/* max-width: 50%; */
-	width: 50%;
-	max-width: 300px;
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	grid-template-rows: 1fr 1fr;
-	grid-template-areas:
-		"label label"
-		"control control2";
-	gap: 5px 20px;
-	justify-content: space-evenly;
-}
-
-.control-group>label {
-	grid-area: label;
-	color: #fff;
-	text-align: center;
-	font-size: 1rem;
-	font-weight: bold;
-}
-
-.control-group .control:first-child {
-	grid-area: control;
-}
-
-.control-group .control:nth-child(1) {
-	grid-area: control2;
-}
-
-.control-group .control {
-	color: #fff;
-	text-align: center;
-	font-size: 1rem;
-}
-
-.control-group input[type="radio"] {
-	display: none;
-}
-
-.control-group .control label {
-	display: block;
-	cursor: pointer;
-	background: #111;
-	color: #fff;
-	padding: 3px;
-	border-radius: 5px;
-	border: 1px solid #fff;
-	transition: all 0.2s ease-in-out;
-}
-
-.control-group .control label:hover {
-	background: #333;
-}
-
-.control-group .control label.selected {
-	background: #444;
 }
 
 .game-board-cells,
