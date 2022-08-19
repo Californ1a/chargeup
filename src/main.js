@@ -1,5 +1,6 @@
-import { createApp, defineAsyncComponent } from 'vue';
+import { createApp } from 'vue';
+import App from './App.vue';
 
 import './assets/main.css';
 
-createApp(defineAsyncComponent(() => import('./App.vue'))).mount('#app');
+createApp(App).mount('#app');
