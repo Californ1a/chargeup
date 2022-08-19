@@ -106,24 +106,21 @@ function updateMode(newMode) {
 	mode.value = newMode;
 }
 
-function setCountColor(i, type) {
-	const g = "get" + type.charAt(0).toUpperCase() + type.slice(1);
-	const cars = game.value[g](i).filter(c => c.value === 'car');
+function getCountColor(i, type) {
+	const getFunc = "get" + type.charAt(0).toUpperCase() + type.slice(1);
+	const cars = game.value[getFunc](i).filter(c => c.value === 'car');
 	const displayedCars = cars.filter(c => c.displayValue === 'car');
-	const id = `${type}-${i}`;
 	if (displayedCars.length === cars.length) {
-		countColor.value[id] = 'lime';
-	} else {
-		countColor.value[id] = 'white';
+		return 'green';
 	}
+	return 'white';
 }
 
 function editCell(cell, value) {
 	cell.display(value);
 
-	setCountColor(cell.row, 'row');
-	setCountColor(cell.col, 'col');
-
+	countColor.value[`row-${cell.row}`] = getCountColor(cell.row, 'row');
+	countColor.value[`col-${cell.col}`] = getCountColor(cell.col, 'col');
 
 	const check = game.value.checkBoard();
 	if (!check) return;
@@ -203,6 +200,15 @@ onMounted(() => {
 			editCell(cell, 'charge');
 		}
 	}
+	const rowsColors = Array.apply(null, Array(rows)).reduce((acc, val, i) => ({
+		...acc,
+		[`row-${i}`]: getCountColor(i, 'row')
+	}), {});
+	const colsColors = Array.apply(null, Array(cols)).reduce((acc, val, i) => ({
+		...acc,
+		[`col-${i}`]: getCountColor(i, 'col')
+	}), {});
+	countColor.value = { ...rowsColors, ...colsColors };
 });
 </script>
 
@@ -231,6 +237,10 @@ h1 {
 	text-align: center;
 	font-size: 2rem;
 	padding: 0.5rem;
+}
+
+.count {
+	color: white;
 }
 
 .game-board-cells,
