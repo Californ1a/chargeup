@@ -24,6 +24,9 @@ defineProps(['mode']);
 	align-items: center;
 	display: flex;
 	user-select: none;
+	position: sticky;
+	bottom: 0;
+	background: #222222f9;
 }
 
 .control-group {
