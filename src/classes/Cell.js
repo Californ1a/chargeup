@@ -11,6 +11,8 @@ export class Cell {
 		this.hover = false;
 		this.displayValue = null;
 		this.carIcon = carIcons[Math.floor(Math.random() * carIcons.length)];
+		this.connectedCharger = null;
+		this.connectedCar = null;
 	}
 
 	display(value) {
@@ -21,4 +23,11 @@ export class Cell {
 			this.correct = false;
 		}
 	}
+	setConnectedCar(cell) {
+		this.connectedCar = cell;
+	}
+	setConnectedCharger(cell) {
+		this.connectedCharger = cell;
+	}
+
 }

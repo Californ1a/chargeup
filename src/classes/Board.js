@@ -22,7 +22,14 @@ export class Board {
 		return this.cells[row][col];
 	}
 	setCell(row, col, value) {
-		this.cells[row][col].value = value;
+		const cell = this.getCell(row, col);
+		cell.value = value;
+		if (!value.match(/(charge|car)/)) {
+			// if the new value isn't a charger or a car, remove the connected charger and car
+			cell.setConnectedCharger(null);
+			cell.setConnectedCar(null);
+		}
+		return cell;
 	}
 	getRow(row) {
 		return this.cells[row];
@@ -139,7 +146,7 @@ export class Board {
 			}
 
 			// There was at least one place to put a car, so we can place the charger
-			this.setCell(randomRow, randomCol, 'charge');
+			const chargerCell = this.setCell(randomRow, randomCol, 'charge');
 			let randomEmptyChargerNeighbor;
 			let carNeighbors;
 			// We already know one of the neighbors allowed a car, so we can pick one of those
@@ -147,7 +154,9 @@ export class Board {
 			carNeighbors = this.getCellNeighborsWithDiagonal(randomEmptyChargerNeighbor);
 			const carNeighborsWithObject = carNeighbors.filter(cell => cell.value === 'car');
 			if (carNeighborsWithObject.length === 0) {
-				this.setCell(randomEmptyChargerNeighbor.row, randomEmptyChargerNeighbor.col, 'car');
+				const carCell = this.setCell(randomEmptyChargerNeighbor.row, randomEmptyChargerNeighbor.col, 'car');
+				carCell.setConnectedCharger(chargerCell);
+				chargerCell.setConnectedCar(carCell);
 			}
 			// Now set all the other neighbors to be road
 			const neighborsOfCarWithoutValue = carNeighbors.filter(cell => cell.value === null);
@@ -169,7 +178,9 @@ export class Board {
 		const chargersToRemove = Math.floor(chargers.length * 0.1);
 		for (let i = 0; i < chargersToRemove; i++) {
 			const randomCharger = chargers[Math.floor(Math.random() * chargers.length)];
+			const car = randomCharger.connectedCar;
 			this.setCell(randomCharger.row, randomCharger.col, 'road');
+			this.setCell(car.row, car.col, 'road');
 		}
 	}
 	getAs(type) {
