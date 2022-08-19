@@ -10,7 +10,8 @@
           hover: cell.hover,
         }">
 				<span v-if="cell.displayValue === 'charge'" class="emoji">⛽</span>
-				<span v-else-if="cell.displayValue === 'car'" class="emoji">{{ cell.carIcon }}</span>
+				<span v-else-if="cell.displayValue === 'car'" class="emoji"
+					:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">{{ cell.carIcon }}</span>
 				<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
 				<!-- <span v-else>{{ cell.row }}, {{ cell.col }}</span> -->
 				<span v-else>&nbsp;</span>
@@ -21,7 +22,9 @@
 				@mouseenter="(e) => toggleHoverClass(e, 'row', i)"
 				@mouseleave="(e) => toggleHoverClass(e, 'row', i)"
 				@click="(e) => displayAll(e, 'row', i)">
-				<span class="count">{{ row.filter(cell=>cell.value==="car").length }}</span>
+				<span class="count" :style="`color: ${countColor[`row-${i}`]}`">
+					{{ carsInRowCol(i, 'row', 'value') }}
+				</span>
 				<!-- Row {{ i }} -->
 			</div>
 		</div>
@@ -30,7 +33,9 @@
 				@mouseenter="(e) => toggleHoverClass(e, 'col', i)"
 				@mouseleave="(e) => toggleHoverClass(e, 'col', i)"
 				@click="(e) => displayAll(e, 'col', i)">
-				<span class="count">{{ game.getCol(i).filter(cell=>cell.value==="car").length }}</span>
+				<span class="count" :style="`color: ${countColor[`col-${i}`]}`">
+					{{ carsInRowCol(i, 'col', 'value') }}
+				</span>
 				<!-- Col {{ i }} -->
 			</div>
 			<!-- <div class="col-count empty"></div> -->
@@ -56,6 +61,19 @@ const cellElements = ref(null);
 const rows = 5;
 const cols = 7;
 const game = ref(new Board(rows, cols));
+
+const hues = {};
+const countColor = ref({});
+
+function random(id, min, max) {
+	hues[id] = hues[id] || Math.floor(Math.random() * (max - min + 1)) + min
+	return hues[id];
+}
+
+function carsInRowCol(row, rowCol, type) {
+	const cells = (rowCol === 'row') ? game.value.getRow(row) : game.value.getCol(row);
+	return cells.filter(cell => cell[type] === "car").length;
+}
 
 function toggleHoverClass(e, type, i) {
 	const rowCol = (type === 'row') ? game.value.getRow(i) : game.value.getCol(i);
@@ -88,8 +106,25 @@ function updateMode(newMode) {
 	mode.value = newMode;
 }
 
+function setCountColor(i, type) {
+	const g = "get" + type.charAt(0).toUpperCase() + type.slice(1);
+	const cars = game.value[g](i).filter(c => c.value === 'car');
+	const displayedCars = cars.filter(c => c.displayValue === 'car');
+	const id = `${type}-${i}`;
+	if (displayedCars.length === cars.length) {
+		countColor.value[id] = 'lime';
+	} else {
+		countColor.value[id] = 'white';
+	}
+}
+
 function editCell(cell, value) {
 	cell.display(value);
+
+	setCountColor(cell.row, 'row');
+	setCountColor(cell.col, 'col');
+
+
 	const check = game.value.checkBoard();
 	if (!check) return;
 	setTimeout(() => {
@@ -231,6 +266,7 @@ h1 {
 .row-count,
 .col-count {
 	background: #222;
+	font-weight: bold;
 
 }
 
