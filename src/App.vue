@@ -16,11 +16,47 @@
           hover: cell.hover,
 					hint: cell.hint,
         }">
-				<span v-if="cell.displayValue === 'charge'" class="emoji">⛽</span>
-				<span v-else-if="cell.displayValue === 'car'" class="emoji"
-					:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">{{ cell.carIcon }}</span>
+				<span v-if="cell.displayValue === 'charge'" class="emoji">
+					<span v-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'up'">
+						<span class="up">^<br /></span>⛽
+					</span>
+					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'down'">
+						⛽<span class="down"><br />v</span>
+					</span>
+					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'left'">
+						<span class="left">&lt;</span>⛽
+					</span>
+					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'right'">
+						⛽<span class="right">&gt;</span>
+					</span>
+					<span v-else>⛽</span>
+				</span>
+				<span v-else-if="cell.displayValue === 'car'" class="emoji">
+
+					<span
+						v-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'up'"
+						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
+						<span class="up">^<br /></span>{{ cell.carIcon }}
+					</span>
+					<span
+						v-else-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'down'"
+						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
+						{{ cell.carIcon }}<span class="down"><br />v</span>
+					</span>
+					<span
+						v-else-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'left'"
+						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
+						<span class="left">&lt;</span>{{ cell.carIcon }}
+					</span>
+					<span
+						v-else-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'right'"
+						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
+						{{ cell.carIcon }}<span class="right">&gt;</span>
+					</span>
+					<span v-else>{{ cell.carIcon }}</span>
+
+				</span>
 				<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
-				<!-- <span v-else>{{ cell.row }}, {{ cell.col }}</span> -->
 				<span v-else>&nbsp;</span>
 			</div>
 		</div>
@@ -32,7 +68,6 @@
 				<span class="count" :style="`color: ${countColor[`row-${i}`]}`">
 					{{ carsInRowCol(i, 'row', 'value') }}
 				</span>
-				<!-- Row {{ i }} -->
 			</div>
 		</div>
 		<div class="col-count-cells">
@@ -43,9 +78,7 @@
 				<span class="count" :style="`color: ${countColor[`col-${i}`]}`">
 					{{ carsInRowCol(i, 'col', 'value') }}
 				</span>
-				<!-- Col {{ i }} -->
 			</div>
-			<!-- <div class="col-count empty"></div> -->
 		</div>
 		<GameControls :mode="mode" @update:modelValue="updateMode" />
 	</div>
@@ -147,6 +180,26 @@ function getCountColor(i, type) {
 function editCell(cell, value) {
 	cell.display(value);
 
+	if (value === 'car') {
+		const charger = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge')[0];
+		if (charger) {
+			charger.displayConnection = charger.getConnectionDirection(cell);
+			cell.displayConnection = cell.getConnectionDirection(charger);
+			charger.displayConnectedCar = cell;
+			cell.displayConnectedCharger = charger;
+		}
+	} else {
+		const connection = cell.displayConnectedCar ?? cell.displayConnectedCharger;
+		if (connection) {
+			connection.displayConnection = null;
+			connection.displayConnectedCar = null;
+			connection.displayConnectedCharger = null;
+		}
+		cell.displayConnection = null;
+		cell.displayConnectedCar = null;
+		cell.displayConnectedCharger = null;
+	}
+
 	countColor.value[`row-${cell.row}`] = getCountColor(cell.row, 'row');
 	countColor.value[`col-${cell.col}`] = getCountColor(cell.col, 'col');
 
@@ -226,6 +279,7 @@ onMounted(() => {
 		cell.element = cellEle;
 		if (cell.value === 'charge') {
 			editCell(cell, 'charge');
+			// console.log(cell.getConnectionDirection());
 		}
 	}
 
@@ -404,6 +458,13 @@ h1 {
 
 .game-cell .emoji {
 	font-size: calc((20vh + 20vw) / (v-bind('rows') + v-bind('cols')));
+}
+
+.up,
+.down,
+.left,
+.right {
+	font-size: calc((10vh + 10vw) / (v-bind('rows') + v-bind('cols')));
 }
 
 .game-cell:not(.visible):hover,

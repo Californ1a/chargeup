@@ -13,6 +13,9 @@ export class Cell {
 		this.carIcon = carIcons[Math.floor(Math.random() * carIcons.length)];
 		this.connectedCharger = null;
 		this.connectedCar = null;
+		this.displayConnectedCharger = null;
+		this.displayConnectedCar = null;
+		this.displayConnection = null;
 		this.hint = false;
 	}
 
@@ -29,6 +32,20 @@ export class Cell {
 	}
 	setConnectedCharger(cell) {
 		this.connectedCharger = cell;
+	}
+
+	setDisplayConnection(cell) {
+		const dir = this.getConnectionDirection(cell);
+		const reverseDir = cell.getConnectionDirection(this);
+		this.displayConnection = dir;
+		cell.displayConnection = reverseDir;
+	}
+
+	getConnectionDirection(cell) {
+		// console.log(this);
+		const colOffset = cell.col - this.col;
+		const rowOffset = cell.row - this.row;
+		return (colOffset === 0) ? (rowOffset > 0 ? "down" : "up") : (colOffset > 0 ? "right" : "left");
 	}
 
 }
