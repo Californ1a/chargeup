@@ -174,7 +174,7 @@ function updateMode(newMode) {
 function getCountColor(i, type) {
 	const getFunc = "get" + type.charAt(0).toUpperCase() + type.slice(1);
 	const cars = game.value[getFunc](i).filter(c => c.value === 'car');
-	const displayedCars = cars.filter(c => c.displayValue === 'car');
+	const displayedCars = game.value[getFunc](i).filter(c => c.displayValue === 'car');
 	if (displayedCars.length === cars.length) {
 		return 'green';
 	}
@@ -232,7 +232,7 @@ function editCell(cell, value) {
 
 	if (value === 'car') {
 		const chargers = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
-		console.log("chargersA", chargers);
+		// console.log("chargersA", chargers);
 		const charger = chargers.reduce((acc, val) => {
 			const filledNeighborsA = game.value.getCellNeighbors(acc).filter(n => n.displayValue !== null);
 			const filledNeighborsB = game.value.getCellNeighbors(val).filter(n => n.displayValue !== null);
@@ -242,7 +242,7 @@ function editCell(cell, value) {
 			// console.log(filledNeighborsA, filledNeighborsB, leastNeighbors, mostNeighbors, notConnected);
 			return notConnected;
 		});
-		console.log("chargerA", charger);
+		// console.log("chargerA", charger);
 
 		if (charger && !charger.displayConnection) {
 			charger.displayConnection = charger.getConnectionDirection(cell);
@@ -251,7 +251,7 @@ function editCell(cell, value) {
 			cell.displayConnectedCharger = charger;
 		} else if (charger.displayConnection) {
 			const newCharger = recurseChargers(cell);
-			console.log("newCharger", newCharger);
+			// console.log("newCharger", newCharger);
 			if (newCharger) {
 				for (let i = seenIds.length - 1; i >= 0; i -= 2) {
 					const newCell = game.value.getCellById(seenIds[i]);
