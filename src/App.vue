@@ -233,7 +233,11 @@ function editCell(cell, value) {
 
 	if (value === 'car') {
 		const chargers = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
+		const emptyCarNeighbors = game.value.getCellNeighborsWithDiagonal(cell).filter(c => c.displayValue === null);
 		// console.log("chargersA", chargers);
+		for (const road of emptyCarNeighbors) {
+			road.display('road');
+		}
 		const charger = chargers.reduce((acc, val) => {
 			const filledNeighborsA = game.value.getCellNeighbors(acc).filter(n => n.displayValue !== null);
 			const filledNeighborsB = game.value.getCellNeighbors(val).filter(n => n.displayValue !== null);
@@ -243,6 +247,9 @@ function editCell(cell, value) {
 			// console.log(filledNeighborsA, filledNeighborsB, leastNeighbors, mostNeighbors, notConnected);
 			return notConnected;
 		});
+		for (const road of emptyCarNeighbors) {
+			road.display(null);
+		}
 		// console.log("chargerA", charger);
 
 		if (charger && !charger.displayConnection) {
