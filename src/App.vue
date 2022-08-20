@@ -228,6 +228,7 @@ function recurseChargers(cell) {
 }
 
 function editCell(cell, value) {
+	const oldValue = cell.displayValue;
 	cell.display(value);
 
 	if (value === 'car') {
@@ -263,6 +264,21 @@ function editCell(cell, value) {
 				}
 			}
 		}
+	} else if (oldValue === 'car' && cell.displayValue !== 'car' && cell.displayConnectedCharger) {
+		// find unconnected cars next to charger and connect them
+		const cars = game.value.getCellNeighbors(cell.displayConnectedCharger).filter(c => c.displayValue === 'car' && !c.displayConnection);
+		const charger = cell.displayConnectedCharger;
+		if (cars.length > 0) {
+			cars[0].displayConnection = cars[0].getConnectionDirection(charger);
+			charger.displayConnection = charger.getConnectionDirection(cars[0]);
+			cars[0].displayConnectedCharger = charger;
+			charger.displayConnectedCar = cars[0];
+		} else {
+			charger.displayConnection = null;
+			charger.displayConnectedCar = null;
+		}
+		cell.displayConnection = null;
+		cell.displayConnectedCharger = null;
 	} else {
 		const connection = cell.displayConnectedCar ?? cell.displayConnectedCharger;
 		if (connection) {
