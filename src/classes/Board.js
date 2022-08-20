@@ -71,6 +71,11 @@ export class Board {
 		}
 		return neighbors;
 	}
+	getCellById(id) {
+		const row = id.split('-')[0];
+		const col = id.split('-')[1];
+		return this.getCell(row, col);
+	}
 	getCellNeighbors(cell) {
 		const row = cell.row;
 		const col = cell.col;
@@ -157,14 +162,6 @@ export class Board {
 				const carCell = this.setCell(randomEmptyChargerNeighbor.row, randomEmptyChargerNeighbor.col, 'car');
 				carCell.setConnectedCharger(chargerCell);
 				chargerCell.setConnectedCar(carCell);
-				// const carColOffset = carCell.col - chargerCell.col;
-				// const carRowOffset = carCell.row - chargerCell.row;
-				// const carDir = (carColOffset === 0) ? (carRowOffset > 0 ? "down" : "up") : (carColOffset > 0 ? "right" : "left");
-				// const chargerColOffset = carCell.col - chargerCell.col;
-				// const chargerRowOffset = carCell.row - chargerCell.row;
-				// const chargerDir = (chargerColOffset === 0) ? (chargerRowOffset > 0 ? "down" : "up") : (chargerColOffset > 0 ? "right" : "left");
-				// carCell.connectionDirection = carDir;
-				// chargerCell.connectionDirection = chargerDir;
 			}
 			// Now set all the other neighbors to be road
 			const neighborsOfCarWithoutValue = carNeighbors.filter(cell => cell.value === null);

@@ -17,16 +17,20 @@
 					hint: cell.hint,
         }">
 				<span v-if="cell.displayValue === 'charge'" class="emoji">
-					<span v-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'up'">
+					<span v-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'up'"
+						style="filter: hue-rotate(100deg) saturate(2.5);">
 						<span class="up">^<br /></span>⛽
 					</span>
-					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'down'">
+					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'down'"
+						style="filter: hue-rotate(100deg) saturate(2.5);">
 						⛽<span class="down"><br />v</span>
 					</span>
-					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'left'">
+					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'left'"
+						style="filter: hue-rotate(100deg) saturate(2.5);">
 						<span class="left">&lt;</span>⛽
 					</span>
-					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'right'">
+					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'right'"
+						style="filter: hue-rotate(100deg) saturate(2.5);">
 						⛽<span class="right">&gt;</span>
 					</span>
 					<span v-else>⛽</span>
@@ -177,16 +181,87 @@ function getCountColor(i, type) {
 	return 'white';
 }
 
+const seenIds = [];
+
+// search backward from car to charger until finding a charger with no connection
+function recurseChargers(cell) {
+	if (seenIds.includes(cell.id)) return;
+	seenIds.push(cell.id);
+	// console.log("seenIds", seenIds);
+	if (cell.value === 'charge') {
+		let cars = game.value.getCellNeighbors(cell).filter(c => c.displayValue === 'car' && c.displayConnection);
+		// console.log("cars", cars);
+		// console.log("cell", cell);
+		// console.log("previous", previous);
+		if (cars.length === 1 && !cell.displayConnection) {
+			// end of the chain, found charger with only one car, swap connection direction
+			// console.log("found charger with only one car", cell, cars[0]);
+			return cars[0];
+		} else {
+			// not end of the chain, keep searching
+			const cars1 = cars.filter(c => c.displayConnection);
+			// console.log("cars1", cars1);
+			const cars2 = cars1.filter(c => !seenIds.includes(c.id));
+			// console.log("cars2", cars2);
+			for (const car of cars2) {
+				const charger = recurseChargers(car);
+				if (charger) {
+					// console.log("found charger", charger, car);
+					return car;
+				}
+			}
+		}
+	} else {
+		// is a car, keep searching
+		const chargers1 = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
+		// console.log("chargers1", chargers1);
+		const chargers = chargers1.filter(c => !seenIds.includes(c.id));
+		// console.log("chargers", chargers);
+		for (const charger of chargers) {
+			const car = recurseChargers(charger);
+			if (car) {
+				// console.log("found car", charger, car);
+				return charger;
+			}
+		}
+	}
+}
+
 function editCell(cell, value) {
 	cell.display(value);
 
 	if (value === 'car') {
-		const charger = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge')[0];
-		if (charger) {
+		const chargers = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
+		console.log("chargersA", chargers);
+		const charger = chargers.reduce((acc, val) => {
+			const filledNeighborsA = game.value.getCellNeighbors(acc).filter(n => n.displayValue !== null);
+			const filledNeighborsB = game.value.getCellNeighbors(val).filter(n => n.displayValue !== null);
+			const leastNeighbors = (filledNeighborsA.length > filledNeighborsB.length) ? acc : val;
+			const mostNeighbors = (filledNeighborsA.length > filledNeighborsB.length) ? val : acc;
+			const notConnected = (leastNeighbors.displayConnection) ? mostNeighbors : leastNeighbors;
+			// console.log(filledNeighborsA, filledNeighborsB, leastNeighbors, mostNeighbors, notConnected);
+			return notConnected;
+		});
+		console.log("chargerA", charger);
+
+		if (charger && !charger.displayConnection) {
 			charger.displayConnection = charger.getConnectionDirection(cell);
 			cell.displayConnection = cell.getConnectionDirection(charger);
 			charger.displayConnectedCar = cell;
 			cell.displayConnectedCharger = charger;
+		} else if (charger.displayConnection) {
+			const newCharger = recurseChargers(cell);
+			console.log("newCharger", newCharger);
+			if (newCharger) {
+				for (let i = seenIds.length - 1; i >= 0; i -= 2) {
+					const newCell = game.value.getCellById(seenIds[i]);
+					const newCell2 = game.value.getCellById(seenIds[i - 1]);
+					newCell.displayConnection = newCell.getConnectionDirection(newCell2);
+					newCell2.displayConnection = newCell2.getConnectionDirection(newCell);
+					newCell.displayConnectedCar = newCell2;
+					newCell2.displayConnectedCharger = newCell;
+				}
+			}
 		}
 	} else {
 		const connection = cell.displayConnectedCar ?? cell.displayConnectedCharger;
@@ -458,9 +533,13 @@ h1 {
 
 .game-cell .emoji {
 	font-size: calc((20vh + 20vw) / (v-bind('rows') + v-bind('cols')));
+	line-height: 1;
 }
 
-.up,
+.up {
+	font-size: calc((13vh + 13vw) / (v-bind('rows') + v-bind('cols')));
+}
+
 .down,
 .left,
 .right {
