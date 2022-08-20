@@ -13,6 +13,7 @@ export class Cell {
 		this.carIcon = carIcons[Math.floor(Math.random() * carIcons.length)];
 		this.connectedCharger = null;
 		this.connectedCar = null;
+		this.hint = false;
 	}
 
 	display(value) {

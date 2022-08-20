@@ -17,6 +17,7 @@ export class Board {
 			this.cols = cols;
 			this.generateBoard();
 		}
+		this.hints = [];
 	}
 	getCell(row, col) {
 		return this.cells[row][col];
@@ -25,7 +26,6 @@ export class Board {
 		const cell = this.getCell(row, col);
 		cell.value = value;
 		if (!value.match(/(charge|car)/)) {
-			// if the new value isn't a charger or a car, remove the connected charger and car
 			cell.setConnectedCharger(null);
 			cell.setConnectedCar(null);
 		}
@@ -174,14 +174,25 @@ export class Board {
 		}
 
 		// Sometimes remove a few random chargers
-		const chargers = this.getFlatCells().filter(cell => cell.value === 'charge');
-		const chargersToRemove = Math.floor(chargers.length * 0.1);
-		for (let i = 0; i < chargersToRemove; i++) {
+		// this.removeRandomChargers();
+	}
+	removeRandomChargers() {
+		let chargers = this.getFlatCells().filter(cell => cell.value === 'charge');
+		const chargersToRemove = Math.floor(chargers.length * 0.06);
+		for (let i = chargersToRemove; i >= 0; i--) {
+			chargers = this.getFlatCells().filter(cell => cell.value === 'charge');
 			const randomCharger = chargers[Math.floor(Math.random() * chargers.length)];
 			const car = randomCharger.connectedCar;
-			this.setCell(randomCharger.row, randomCharger.col, 'road');
 			this.setCell(car.row, car.col, 'road');
+			this.setCell(randomCharger.row, randomCharger.col, 'road');
 		}
+	}
+	getHint() {
+		const incorrectCells = this.getFlatCells().filter(cell => cell.correct === false);
+		if (incorrectCells.length === 0) return null;
+		const randomCell = incorrectCells[Math.floor(Math.random() * incorrectCells.length)];
+		return randomCell;
+
 	}
 	getAs(type) {
 		const values = [...this.cells];

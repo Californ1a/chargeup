@@ -2,7 +2,10 @@
 	<div class="game-board">
 		<div class="header">
 			<h1>Charge Up</h1>
-			<button @click="openRulesModal">Rules</button>
+			<div class="topbuttons">
+				<button @click="openRulesModal">Rules</button>
+				<button @click="getHint">Hint</button>
+			</div>
 		</div>
 		<div ref="cellElements" class="game-board-cells" @mousemove="clicking">
 			<div v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
@@ -11,6 +14,7 @@
           visible: cell.displayValue,
           charge: cell.value === 'charge',
           hover: cell.hover,
+					hint: cell.hint,
         }">
 				<span v-if="cell.displayValue === 'charge'" class="emoji">⛽</span>
 				<span v-else-if="cell.displayValue === 'car'" class="emoji"
@@ -56,9 +60,7 @@ import { Board } from './classes/Board';
 // import basicBoard from './assets/basicBoard';
 
 const cellElements = ref(null);
-const modalElement = ref(null);
 
-// max without scroll is 11x20 or 17x13
 // standard sizes are 5x7, 7x10, and 10x14
 
 // const rows = basicBoard.length;
@@ -70,8 +72,18 @@ const game = ref(new Board(rows, cols));
 
 const hues = {};
 const countColor = ref({});
-
 const rulesModalDisplay = ref('none');
+
+function getHint() {
+	const hintCell = game.value.getHint();
+	if (!hintCell) return;
+	editCell(hintCell, hintCell.value);
+	hintCell.hint = true;
+	setTimeout(() => {
+		hintCell.hint = false;
+	}, 1000);
+	game.value.hints.push(hintCell);
+}
 
 function openRulesModal() {
 	rulesModalDisplay.value = 'flex';
@@ -142,7 +154,7 @@ function editCell(cell, value) {
 	if (!check) return;
 	setTimeout(() => {
 		if (check === "win") {
-			alert('You win!');
+			alert(`You win! Used ${game.value.hints.length} hints.`);
 		} else if (check === "wrong") {
 			alert('Wrong!');
 		}
@@ -248,8 +260,6 @@ onMounted(() => {
 .header {
 	grid-area: header;
 	font-size: 1.5rem;
-	/* display: flex;
-	justify-content: center; */
 	position: sticky;
 	top: 0;
 	text-align: center;
@@ -260,12 +270,17 @@ onMounted(() => {
 	z-index: 1;
 }
 
-.header button {
+.topbuttons {
 	float: right;
+	display: grid;
+	gap: 0.3rem;
 	position: relative;
-	/* height: 0; */
-	top: -2.5rem;
+	top: -0.7rem;
 	right: 0.2rem;
+}
+
+.header button {
+	/* float: right; */
 	font-size: 0.9rem;
 	color: orange;
 	background: #111;
@@ -282,14 +297,11 @@ onMounted(() => {
 }
 
 h1 {
-	/* position: sticky;
-	top: 0; */
 	color: #fff;
 	background: #333333aa;
-	/* text-align: center; */
 	font-size: 2rem;
 	padding: 0.5rem;
-	margin-bottom: -1.5rem;
+	margin-bottom: -3.2rem;
 }
 
 .count {
@@ -303,13 +315,24 @@ h1 {
 	height: 100%;
 }
 
+.game-board-cells,
+.col-count-cells {
+	min-width: calc(v-bind(cols) * 1rem);
+}
+
+.game-board-cells,
+.row-count-cells {
+	min-height: calc(v-bind(rows) * 1.2rem);
+}
+
 .row-count-cells {
 	grid-area: row-count-cells;
-	min-width: 40px;
+	min-width: 30px;
 }
 
 .col-count-cells {
 	grid-area: col-count-cells;
+	min-height: 30px;
 }
 
 .row-count-cells {
@@ -341,9 +364,16 @@ h1 {
 	align-items: center;
 	border-top: 1px solid #666;
 	border-left: 1px solid #666;
-	padding: 0.5rem;
 	text-align: center;
 	user-select: none;
+}
+
+.row-count {
+	padding: 0 0.1vw;
+}
+
+.col-count {
+	padding: 0.1vh 0;
 }
 
 .row-count-cells,
@@ -363,25 +393,38 @@ h1 {
 
 .game-cell {
 	background: #aaa;
-
+	padding: 0 0.5rem;
+	transition: background 0s linear;
 }
 
 .game-cell.visible {
 	background: #333;
+	transition: background 0s linear;
 }
 
 .game-cell .emoji {
-	font-size: 2rem;
+	font-size: calc((20vh + 20vw) / (v-bind('rows') + v-bind('cols')));
 }
 
 .game-cell:not(.visible):hover,
 .game-cell:not(.visible).hover {
 	background: #999;
+	transition: background 0s linear;
 }
 
 .game-cell.visible:not(.charge):hover,
 .game-cell.visible:not(.charge).hover {
 	background: #444;
+}
+
+.game-cell.hint {
+	background: #ffa500aa;
+	transition: background 0.5s ease-in-out;
+	border: 0.3vw solid #ffa50099;
+	border-radius: 3px;
+	/* outline: 8px solid #ffa500; */
+	box-shadow: 0 0 0 3px #ffa500ff;
+	z-index: 1;
 }
 
 .game-cell.charge {
