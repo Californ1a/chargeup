@@ -140,28 +140,50 @@ function carsInRowCol(row, rowCol, type) {
 	return cells.filter(cell => cell[type] === "car").length;
 }
 
-function toggleHoverClass(e, type, i) {
-	const rowCol = (type === 'row') ? game.value.getRow(i) : game.value.getCol(i);
-	const eType = (e.type === 'mouseenter') ? true : false; // .toggle() can get stuck on if hot reload while hovering
+function dealWithRowCol(rowOrCol, i, eType) {
+	const rowCol = (rowOrCol === 'row') ? game.value.getRow(i) : game.value.getCol(i);
 	const cellsToChange = [];
-	const cellsToNotChange = [];
+	const cellsToNull = [];
+	const connectedCars = rowCol.filter(c => c.displayValue === 'car' && c.displayConnection);
 	for (const cell of rowCol) {
 		if (cell.value === 'charge') continue;
+		const cars = connectedCars.filter(c => c.id === cell.id);
+		if (cars.length !== 0) {
+			cell.hover = false;
+			continue;
+		}
 		if (cell.displayValue !== mode.value) {
 			cellsToChange.push(cell);
 		} else {
-			cellsToNotChange.push(cell);
+			cellsToNull.push(cell);
 		}
 	}
 	if (cellsToChange.length > 0) {
 		for (const cell of cellsToChange) {
-			cell.hover = eType;
+			if (typeof eType === 'boolean') {
+				cell.hover = eType;
+			} else {
+				editCell(cell, mode.value);
+			}
 		}
 	} else {
-		for (const cell of cellsToNotChange) {
-			cell.hover = eType;
+		for (const cell of cellsToNull) {
+			if (typeof eType === 'boolean') {
+				cell.hover = eType;
+			} else {
+				editCell(cell, null);
+			}
 		}
 	}
+}
+
+function toggleHoverClass(e, type, i) {
+	const eType = (e.type === 'mouseenter') ? true : false; // .toggle() can get stuck on if hot reload while hovering
+	dealWithRowCol(type, i, eType);
+}
+
+function displayAll(e, type, i) {
+	dealWithRowCol(type, i);
 }
 
 const mode = ref('road');
@@ -346,31 +368,6 @@ function editCell(cell, value) {
 		console.log(game.value.getAs('value'));
 		console.log(game.value.getAs('correct'));
 	}, 50);
-}
-
-function displayAll(e, type, i) {
-	const rowCol = (type === 'row') ? game.value.getRow(i) : game.value.getCol(i);
-	const cellsToChange = [];
-	const cellsToNotChange = [];
-	for (const cell of rowCol) {
-		if (cell.value === 'charge') continue;
-		if (cell.displayValue !== mode.value) {
-			cellsToChange.push(cell);
-		} else {
-			cellsToNotChange.push(cell);
-		}
-	}
-	if (cellsToChange.length > 0) {
-		for (const cell of cellsToChange) {
-			editCell(cell, mode.value);
-			cell.element.classList.add('hover');
-		}
-	} else {
-		for (const cell of cellsToNotChange) {
-			editCell(cell, null);
-			cell.element.classList.add('hover');
-		}
-	}
 }
 
 function clicking(e) {
