@@ -18,6 +18,19 @@ export class Board {
 			this.generateBoard();
 		}
 		this.hints = [];
+		this.startTime = null;
+		this.endTime = null;
+	}
+	setStartTime() {
+		this.startTime = performance.now();
+		return this.startTime;
+	}
+	setEndTime() {
+		this.endTime = performance.now();
+		return this.endTime;
+	}
+	getTime() {
+		return (this.endTime) ? this.endTime - this.startTime : null;
 	}
 	getCell(row, col) {
 		return this.cells[row][col];

@@ -252,6 +252,10 @@ function editCell(cell, value) {
 	const oldValue = cell.displayValue;
 	cell.display(value);
 
+	if (value !== 'charge' && !game.value.startTime) {
+		game.value.setStartTime();
+	}
+
 	const chargers = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
 	const unconnectedChargersWithAllNeighborsFilled = chargers.filter(c => {
 		const hasConnection = c.displayConnection;
@@ -359,9 +363,13 @@ function editCell(cell, value) {
 
 	const check = game.value.checkBoard();
 	if (!check) return;
+	game.value.setEndTime();
+	const placedCells = game.value.getFlatCells().filter(c => c.value !== 'charge');
+	const cars = game.value.getFlatCells().filter(c => c.value === 'car');
 	setTimeout(() => {
 		if (check === "win") {
-			alert(`You win! Used ${game.value.hints.length} hints.`);
+			const time = (game.value.getTime() / 1000).toFixed(2);
+			alert(`You win! Used ${game.value.hints.length} hints. Took ${time} seconds (${(time / placedCells.length).toFixed(2)} per cell & ${(time / cars.length).toFixed(2)} per car).`);
 		} else if (check === "wrong") {
 			alert('Wrong!');
 		}
