@@ -45,7 +45,7 @@ export class Cell {
 		// console.log(this);
 		const colOffset = cell.col - this.col;
 		const rowOffset = cell.row - this.row;
-		console.log(colOffset, rowOffset);
+		// console.log(colOffset, rowOffset);
 		return (colOffset === 0) ? (rowOffset > 0 ? "down" : "up") : (colOffset > 0 ? "right" : "left");
 	}
 

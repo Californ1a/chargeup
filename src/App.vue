@@ -181,7 +181,7 @@ function getCountColor(i, type) {
 	return 'white';
 }
 
-const seenIds = [];
+let seenIds = [];
 
 // search backward from car to charger until finding a charger with no connection
 function recurseChargers(cell) {
@@ -192,7 +192,6 @@ function recurseChargers(cell) {
 		let cars = game.value.getCellNeighbors(cell).filter(c => c.displayValue === 'car' && c.displayConnection);
 		// console.log("cars", cars);
 		// console.log("cell", cell);
-		// console.log("previous", previous);
 		if (cars.length === 1 && !cell.displayConnection) {
 			// end of the chain, found charger with only one car, swap connection direction
 			// console.log("found charger with only one car", cell, cars[0]);
@@ -231,20 +230,38 @@ function editCell(cell, value) {
 	const oldValue = cell.displayValue;
 	cell.display(value);
 
-	if (value === 'car') {
-		const chargers = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
+	const chargers = game.value.getCellNeighbors(cell).filter(c => c.value === 'charge');
+	const unconnectedChargersWithAllNeighborsFilled = chargers.filter(c => {
+		const hasConnection = c.displayConnection;
+		const neighbors = game.value.getCellNeighbors(c);
+		const filledNeighbors = neighbors.filter(n => n.displayValue !== null);
+		const filledNeighborsPercent = filledNeighbors.length / neighbors.length;
+		const carNeighbors = neighbors.filter(n => n.displayValue === 'car');
+		const chargerConnectedCars = carNeighbors.filter(n => {
+			return n.displayConnection && game.value.getCellNeighbors(n.displayConnectedCharger).filter(a => a.displayValue === null).length > 0;
+		});
+		return !hasConnection && filledNeighborsPercent === 1 && carNeighbors.length > 0 && chargerConnectedCars.length > 0;
+	});
+
+	// console.log("unconnectedChargersWithAllNeighborsFilled", unconnectedChargersWithAllNeighborsFilled);
+
+	if (value === 'car' && chargers.length > 0) {
 		const emptyCarNeighbors = game.value.getCellNeighborsWithDiagonal(cell).filter(c => c.displayValue === null);
 		// console.log("chargersA", chargers);
 		for (const road of emptyCarNeighbors) {
 			road.display('road');
 		}
 		const charger = chargers.reduce((acc, val) => {
-			const filledNeighborsA = game.value.getCellNeighbors(acc).filter(n => n.displayValue !== null);
-			const filledNeighborsB = game.value.getCellNeighbors(val).filter(n => n.displayValue !== null);
-			const leastNeighbors = (filledNeighborsA.length > filledNeighborsB.length) ? acc : val;
-			const mostNeighbors = (filledNeighborsA.length > filledNeighborsB.length) ? val : acc;
+			const neighborsA = game.value.getCellNeighbors(acc);
+			const neighborsB = game.value.getCellNeighbors(val);
+			const filledNeighborsA = neighborsA.filter(n => n.displayValue !== null);
+			const filledNeighborsB = neighborsB.filter(n => n.displayValue !== null);
+			const nAFillPercent = filledNeighborsA.length / neighborsA.length;
+			const nBFillPercent = filledNeighborsB.length / neighborsB.length;
+			const leastNeighbors = (nAFillPercent > nBFillPercent) ? acc : val;
+			const mostNeighbors = (nAFillPercent > nBFillPercent) ? val : acc;
 			const notConnected = (leastNeighbors.displayConnection) ? mostNeighbors : leastNeighbors;
-			// console.log(filledNeighborsA, filledNeighborsB, leastNeighbors, mostNeighbors, notConnected);
+			// console.log(filledNeighborsA, filledNeighborsB, nAFillPercent, nBFillPercent, leastNeighbors, mostNeighbors, notConnected);
 			return notConnected;
 		});
 		for (const road of emptyCarNeighbors) {
@@ -270,6 +287,7 @@ function editCell(cell, value) {
 					newCell2.displayConnectedCharger = newCell;
 				}
 			}
+			seenIds = [];
 		}
 	} else if (oldValue === 'car' && cell.displayValue !== 'car' && cell.displayConnectedCharger) {
 		// find unconnected cars next to charger and connect them
@@ -286,6 +304,22 @@ function editCell(cell, value) {
 		}
 		cell.displayConnection = null;
 		cell.displayConnectedCharger = null;
+	} else if (unconnectedChargersWithAllNeighborsFilled.length > 0) {
+		for (const charger of unconnectedChargersWithAllNeighborsFilled) {
+			const neighbors = game.value.getCellNeighbors(charger)
+			const carNeighbors = neighbors.filter(n => n.displayValue === 'car');
+			const chargerConnectedCars = carNeighbors.filter(n => {
+				return n.displayConnection && game.value.getCellNeighbors(n.displayConnectedCharger).filter(a => a.displayValue === null).length > 0;
+			});
+			const car = chargerConnectedCars[0];
+			const newCharger = car.displayConnectedCharger;
+			newCharger.displayConnection = null;
+			newCharger.displayConnectedCar = null;
+			car.displayConnection = car.getConnectionDirection(charger);
+			charger.displayConnection = charger.getConnectionDirection(car);
+			car.displayConnectedCharger = charger;
+			charger.displayConnectedCar = car;
+		}
 	} else {
 		const connection = cell.displayConnectedCar ?? cell.displayConnectedCharger;
 		if (connection) {
