@@ -102,7 +102,7 @@ export class Board {
 			}
 		}
 		let attempts = 0;
-		const maxAttempts = 1000; // this.rows * this.cols;
+		const maxAttempts = this.rows * this.cols * 15;
 		while (this.getFlatCells().filter(cell => cell.value === null).length > 0) {
 			const randomRow = Math.floor(Math.random() * this.rows);
 			const randomCol = Math.floor(Math.random() * this.cols);
@@ -171,10 +171,27 @@ export class Board {
 				}
 			}
 		}
-
+		console.log(this.getAs('value'));
+		// Attempt to place extra cars at unset cells
+		let remainingCells = this.getFlatCells().filter(cell => cell.value === null);
+		let potentialCars = remainingCells.filter(c => this.getCellNeighborsWithDiagonal(c).filter(n => n.value === 'car').length === 0);
+		while (potentialCars.length > 0) {
+			const randomCar = potentialCars[Math.floor(Math.random() * potentialCars.length)];
+			const potentialChargers = this.getCellNeighbors(randomCar).filter(c => c.value === 'road' || c.value === null);
+			if (potentialChargers.length > 0) {
+				const carCell = this.setCell(randomCar.row, randomCar.col, 'car');
+				const charger = potentialChargers[Math.floor(Math.random() * potentialChargers.length)];
+				const chargerCell = this.setCell(charger.row, charger.col, 'charge');
+				carCell.setConnectedCharger(chargerCell);
+				chargerCell.setConnectedCar(carCell);
+			}
+			remainingCells = this.getFlatCells().filter(cell => cell.value === null);
+			potentialCars = remainingCells.filter(c => this.getCellNeighborsWithDiagonal(c).filter(n => n.value === 'car').length === 0);
+		}
+		console.log(this.getAs('value'));
 		// Set remaining cells to be road
-		const remainingCells = this.getFlatCells().filter(cell => cell.value === null);
-		for (const cell of remainingCells) {
+		const newRemainingCells = this.getFlatCells().filter(cell => cell.value === null);
+		for (const cell of newRemainingCells) {
 			this.setCell(cell.row, cell.col, 'road');
 		}
 
