@@ -103,8 +103,8 @@ const cellElements = ref(null);
 // const rows = basicBoard.length;
 // const cols = basicBoard[0].length;
 // const game = ref(new Board(basicBoard));
-const rows = 5; // 10;
-const cols = 7; // 15;
+const rows = 10;
+const cols = 15;
 const game = ref(new Board(rows, cols));
 
 const hues = {};
@@ -380,15 +380,20 @@ function editCell(cell, value) {
 	}, 50);
 }
 
+let lastDraggedCellVal = null;
+
 function clicking(e) {
-	if (e.buttons !== 1 || game.value.endTime) return;
+	if (e.buttons !== 1 || game.value.endTime) {
+		lastDraggedCellVal = null;
+		return;
+	}
 	const x = e.clientX;
 	const y = e.clientY;
 	// which cell is mouse within given cellElements
 	for (const cellEle of cellElements.value.children) {
 		const rect = cellEle.getBoundingClientRect();
 		const cell = game.value.getCellFromElement(cellEle);
-		if (cell.value === 'charge') continue;
+		if (cell.value === 'charge' || game.value.endTime || lastDraggedCellVal !== cell.displayValue) continue;
 		if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
 			if (cell.displayValue !== mode.value && markMode) {
 				editCell(cell, mode.value);
@@ -402,6 +407,7 @@ function clicking(e) {
 function cellClicked(e) {
 	const cell = game.value.getCellFromElement(e.target);
 	if (cell.value === 'charge' || game.value.endTime) return;
+	lastDraggedCellVal = cell.displayValue;
 	if (cell.displayValue === mode.value) {
 		markMode = false;
 		editCell(cell, null);
