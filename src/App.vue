@@ -7,34 +7,36 @@
 				<button @click="getHint">Hint</button>
 			</div>
 		</div>
-		<div ref="cellElements" class="game-board-cells" @mousemove="clicking">
-			<div v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
-				@mousedown="cellClicked"
-				:class="{
+		<div :key="game.id">
+			<div class="game-board-cells" @mousemove="clicking">
+				<div ref="cellElements" v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
+					@mousedown="cellClicked"
+					:class="{
           visible: cell.displayValue,
           charge: cell.value === 'charge',
           hover: cell.hover,
 					hint: cell.hint,
         }">
-				<span v-if="cell.displayValue === 'charge'" class="emoji">
-					<EmojiCell type="charge" :cell="cell" :key="cell.displayConnectedCar" />
-				</span>
-				<span v-else-if="cell.displayValue === 'car'" class="emoji">
-					<EmojiCell type="car" :cell="cell" />
-				</span>
-				<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
-				<span v-else>&nbsp;</span>
+					<span v-if="cell.displayValue === 'charge'" class="emoji">
+						<EmojiCell type="charge" :cell="cell" :key="cell.displayConnectedCar" />
+					</span>
+					<span v-else-if="cell.displayValue === 'car'" class="emoji">
+						<EmojiCell type="car" :cell="cell" />
+					</span>
+					<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
+					<span v-else>&nbsp;</span>
+				</div>
 			</div>
 		</div>
-		<CarCounts :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
-		<CarCounts :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
-		<GameControls :mode="mode" @update:modelValue="updateMode" />
+		<CarCounts :key="game.id" :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
+		<CarCounts :key="game.id" :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
+		<GameControls :mode="mode" :game="game" @update:modelValue="updateMode" @new-game="newGame" />
 	</div>
 	<RulesModal :display="rulesModalDisplay" :close="closeRulesModal" />
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watchEffect } from 'vue';
 import GameControls from './components/GameControls.vue';
 import RulesModal from './components/RulesModal.vue';
 import EmojiCell from './components/EmojiCell.vue';
@@ -42,16 +44,16 @@ import CarCounts from './components/CarCounts.vue';
 import { Board } from './classes/Board';
 // import basicBoard from './assets/basicBoard';
 
-const cellElements = ref(null);
+const cellElements = ref([]);
 
 // standard sizes are 5x7, 7x10, and 10x14
 
 // const rows = basicBoard.length;
 // const cols = basicBoard[0].length;
 // const game = ref(new Board(basicBoard));
-const rows = 10;
-const cols = 15;
-const game = ref(new Board(rows, cols));
+const initialRows = 10;
+const initialCols = 15;
+const game = ref(new Board(initialRows, initialCols));
 
 const countColor = ref({});
 const rulesModalDisplay = ref('none');
@@ -65,6 +67,26 @@ function getHint() {
 		hintCell.hint = false;
 	}, 1000);
 	game.value.hints.push(hintCell);
+}
+
+function newGame(e, rowCount, colCount) {
+	game.value = new Board(rowCount, colCount);
+	onNewGame();
+	const unwatch = watchEffect(() => {
+		if (cellElements.value) {
+			for (const cellEle of cellElements.value) {
+				const cell = game.value.getCellFromElement(cellEle);
+				cell.element = cellEle;
+				if (cell.value === 'charge') {
+					editCell(cell, 'charge');
+					// console.log(cell.getConnectionDirection());
+				}
+			}
+			unwatch();
+		}
+	}, {
+		flush: 'post'
+	});
 }
 
 function openRulesModal() {
@@ -268,7 +290,7 @@ function clicking(e) {
 	const x = e.clientX;
 	const y = e.clientY;
 	// which cell is mouse within given cellElements
-	for (const cellEle of cellElements.value.children) {
+	for (const cellEle of cellElements.value) {
 		const rect = cellEle.getBoundingClientRect();
 		const cell = game.value.getCellFromElement(cellEle);
 		if (cell.value === 'charge' || game.value.endTime || lastDraggedCellVal !== cell.displayValue) continue;
@@ -295,9 +317,21 @@ function cellClicked(e) {
 	}
 }
 
+function onNewGame() {
+	const rowsColors = Array.apply(null, Array(game.value.rows)).reduce((acc, val, i) => ({
+		...acc,
+		[`row-${i}`]: getCountColor(i, 'row')
+	}), {});
+	const colsColors = Array.apply(null, Array(game.value.cols)).reduce((acc, val, i) => ({
+		...acc,
+		[`col-${i}`]: getCountColor(i, 'col')
+	}), {});
+	countColor.value = { ...rowsColors, ...colsColors };
+}
+
 onMounted(() => {
 	console.log(game);
-	for (const cellEle of cellElements.value.children) {
+	for (const cellEle of cellElements.value) {
 		const cell = game.value.getCellFromElement(cellEle);
 		cell.element = cellEle;
 		if (cell.value === 'charge') {
@@ -305,16 +339,7 @@ onMounted(() => {
 			// console.log(cell.getConnectionDirection());
 		}
 	}
-
-	const rowsColors = Array.apply(null, Array(rows)).reduce((acc, val, i) => ({
-		...acc,
-		[`row-${i}`]: getCountColor(i, 'row')
-	}), {});
-	const colsColors = Array.apply(null, Array(cols)).reduce((acc, val, i) => ({
-		...acc,
-		[`col-${i}`]: getCountColor(i, 'col')
-	}), {});
-	countColor.value = { ...rowsColors, ...colsColors };
+	onNewGame();
 });
 </script>
 
@@ -391,16 +416,16 @@ h1 {
 }
 
 .game-board-cells {
-	min-width: calc(v-bind(cols) * 1rem);
+	min-width: calc(v-bind('game.cols') * 1rem);
 }
 
 .game-board-cells {
-	min-height: calc(v-bind(rows) * 1.2rem);
+	min-height: calc(v-bind('game.rows') * 1.2rem);
 }
 
 .game-board-cells {
-	grid-template-columns: repeat(v-bind('cols'), minmax(0, 1fr));
-	grid-template-rows: repeat(v-bind('rows'), minmax(0, 1fr));
+	grid-template-columns: repeat(v-bind('game.cols'), minmax(0, 1fr));
+	grid-template-rows: repeat(v-bind('game.rows'), minmax(0, 1fr));
 	background: #333;
 }
 
@@ -443,18 +468,18 @@ h1 {
 }
 
 .game-cell :deep(.emoji) {
-	font-size: calc((20vh + 20vw) / (v-bind('rows') + v-bind('cols')));
+	font-size: calc((20vh + 20vw) / (v-bind('game.rows') + v-bind('game.cols')));
 	line-height: 1;
 }
 
 :deep(.up) {
-	font-size: calc((13vh + 13vw) / (v-bind('rows') + v-bind('cols')));
+	font-size: calc((13vh + 13vw) / (v-bind('game.rows') + v-bind('game.cols')));
 }
 
 :deep(.down),
 :deep(.left),
 :deep(.right) {
-	font-size: calc((10vh + 10vw) / (v-bind('rows') + v-bind('cols')));
+	font-size: calc((10vh + 10vw) / (v-bind('game.rows') + v-bind('game.cols')));
 }
 
 .game-cell:not(.visible):hover,

@@ -2,6 +2,7 @@ import { Cell } from './Cell';
 
 export class Board {
 	constructor(rows, cols) {
+		this.id = Math.random().toString(36).substring(2, 11);
 		this.cells = [];
 		if (typeof rows === 'object' && rows instanceof Array) {
 			const boardMatrix = rows;
