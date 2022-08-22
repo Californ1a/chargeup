@@ -17,6 +17,8 @@ export class Cell {
 		this.displayConnectedCar = null;
 		this.displayConnection = null;
 		this.hint = false;
+		this.randomHue = (Math.random() * 361).toFixed(2);
+		this.randomSaturate = Math.floor(Math.random() * (2.5 - 0.5 + 1)) + 0.5;
 	}
 
 	display(value) {
@@ -48,5 +50,9 @@ export class Cell {
 		// console.log(colOffset, rowOffset);
 		return (colOffset === 0) ? (rowOffset > 0 ? "down" : "up") : (colOffset > 0 ? "right" : "left");
 	}
-
+	clearDisplayConnections() {
+		this.displayConnectedCharger = null;
+		this.displayConnectedCar = null;
+		this.displayConnection = null;
+	}
 }

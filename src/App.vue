@@ -17,73 +17,17 @@
 					hint: cell.hint,
         }">
 				<span v-if="cell.displayValue === 'charge'" class="emoji">
-					<span v-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'up'"
-						style="filter: hue-rotate(100deg) saturate(2.5);">
-						<span class="up">^<br /></span>⛽
-					</span>
-					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'down'"
-						style="filter: hue-rotate(100deg) saturate(2.5);">
-						⛽<span class="down"><br />v</span>
-					</span>
-					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'left'"
-						style="filter: hue-rotate(100deg) saturate(2.5);">
-						<span class="left">&lt;</span>⛽
-					</span>
-					<span v-else-if="cell.displayConnectedCar?.displayValue && cell.displayConnection === 'right'"
-						style="filter: hue-rotate(100deg) saturate(2.5);">
-						⛽<span class="right">&gt;</span>
-					</span>
-					<span v-else>⛽</span>
+					<EmojiCell type="charge" :cell="cell" :key="cell.displayConnectedCar" />
 				</span>
 				<span v-else-if="cell.displayValue === 'car'" class="emoji">
-
-					<span
-						v-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'up'"
-						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
-						<span class="up">^<br /></span>{{ cell.carIcon }}
-					</span>
-					<span
-						v-else-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'down'"
-						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
-						{{ cell.carIcon }}<span class="down"><br />v</span>
-					</span>
-					<span
-						v-else-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'left'"
-						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
-						<span class="left">&lt;</span>{{ cell.carIcon }}
-					</span>
-					<span
-						v-else-if="cell.displayConnectedCharger?.displayValue && cell.displayConnection === 'right'"
-						:style="`filter: hue-rotate(${random(cell.id, 0,360)}deg)`">
-						{{ cell.carIcon }}<span class="right">&gt;</span>
-					</span>
-					<span v-else>{{ cell.carIcon }}</span>
-
+					<EmojiCell type="car" :cell="cell" />
 				</span>
 				<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
 				<span v-else>&nbsp;</span>
 			</div>
 		</div>
-		<div class="row-count-cells">
-			<div v-for="(row, i) in game.cells" :key="row" class="row-count"
-				@mouseenter="(e) => toggleHoverClass(e, 'row', i)"
-				@mouseleave="(e) => toggleHoverClass(e, 'row', i)"
-				@click="(e) => displayAll(e, 'row', i)">
-				<span class="count" :style="`color: ${countColor[`row-${i}`]}`">
-					{{ carsInRowCol(i, 'row', 'value') }}
-				</span>
-			</div>
-		</div>
-		<div class="col-count-cells">
-			<div v-for="(col, i) in game.cells[0]" :key="col" class="col-count"
-				@mouseenter="(e) => toggleHoverClass(e, 'col', i)"
-				@mouseleave="(e) => toggleHoverClass(e, 'col', i)"
-				@click="(e) => displayAll(e, 'col', i)">
-				<span class="count" :style="`color: ${countColor[`col-${i}`]}`">
-					{{ carsInRowCol(i, 'col', 'value') }}
-				</span>
-			</div>
-		</div>
+		<CarCounts :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
+		<CarCounts :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
 		<GameControls :mode="mode" @update:modelValue="updateMode" />
 	</div>
 	<RulesModal :display="rulesModalDisplay" :close="closeRulesModal" />
@@ -93,6 +37,8 @@
 import { ref, onMounted } from 'vue';
 import GameControls from './components/GameControls.vue';
 import RulesModal from './components/RulesModal.vue';
+import EmojiCell from './components/EmojiCell.vue';
+import CarCounts from './components/CarCounts.vue';
 import { Board } from './classes/Board';
 // import basicBoard from './assets/basicBoard';
 
@@ -107,7 +53,6 @@ const rows = 10;
 const cols = 15;
 const game = ref(new Board(rows, cols));
 
-const hues = {};
 const countColor = ref({});
 const rulesModalDisplay = ref('none');
 
@@ -128,62 +73,6 @@ function openRulesModal() {
 
 function closeRulesModal() {
 	rulesModalDisplay.value = 'none';
-}
-
-function random(id, min, max) {
-	hues[id] = hues[id] || Math.floor(Math.random() * (max - min + 1)) + min
-	return hues[id];
-}
-
-function carsInRowCol(row, rowCol, type) {
-	const cells = (rowCol === 'row') ? game.value.getRow(row) : game.value.getCol(row);
-	return cells.filter(cell => cell[type] === "car").length;
-}
-
-function dealWithRowCol(rowOrCol, i, eType) {
-	const rowCol = (rowOrCol === 'row') ? game.value.getRow(i) : game.value.getCol(i);
-	const cellsToChange = [];
-	const cellsToNull = [];
-	const connectedCars = rowCol.filter(c => c.displayValue === 'car' && c.displayConnection);
-	for (const cell of rowCol) {
-		if (cell.value === 'charge') continue;
-		const cars = connectedCars.filter(c => c.id === cell.id);
-		if (cars.length !== 0) {
-			cell.hover = false;
-			continue;
-		}
-		if (cell.displayValue !== mode.value) {
-			cellsToChange.push(cell);
-		} else {
-			cellsToNull.push(cell);
-		}
-	}
-	if (cellsToChange.length > 0) {
-		for (const cell of cellsToChange) {
-			if (typeof eType === 'boolean') {
-				cell.hover = eType;
-			} else {
-				editCell(cell, mode.value);
-			}
-		}
-	} else {
-		for (const cell of cellsToNull) {
-			if (typeof eType === 'boolean') {
-				cell.hover = eType;
-			} else {
-				editCell(cell, null);
-			}
-		}
-	}
-}
-
-function toggleHoverClass(e, type, i) {
-	const eType = (e.type === 'mouseenter') ? true : false; // .toggle() can get stuck on if hot reload while hovering
-	dealWithRowCol(type, i, eType);
-}
-
-function displayAll(e, type, i) {
-	dealWithRowCol(type, i);
 }
 
 const mode = ref('road');
@@ -278,29 +167,29 @@ function editCell(cell, value) {
 		for (const road of emptyCarNeighbors) {
 			road.display('road');
 		}
-		const charger = chargers.reduce((acc, val) => {
-			const neighborsA = game.value.getCellNeighbors(acc);
-			const neighborsB = game.value.getCellNeighbors(val);
-			const filledNeighborsA = neighborsA.filter(n => n.displayValue !== null);
-			const filledNeighborsB = neighborsB.filter(n => n.displayValue !== null);
-			const nAFillPercent = filledNeighborsA.length / neighborsA.length;
-			const nBFillPercent = filledNeighborsB.length / neighborsB.length;
-			const leastNeighbors = (nAFillPercent > nBFillPercent) ? acc : val;
-			const mostNeighbors = (nAFillPercent > nBFillPercent) ? val : acc;
-			const notConnected = (leastNeighbors.displayConnection) ? mostNeighbors : leastNeighbors;
-			// console.log(filledNeighborsA, filledNeighborsB, nAFillPercent, nBFillPercent, leastNeighbors, mostNeighbors, notConnected);
-			return notConnected;
-		});
+		let charger = chargers[0];
+		if (chargers.length > 1) {
+			charger = chargers.reduce((acc, val) => {
+				const neighborsA = game.value.getCellNeighbors(acc);
+				const neighborsB = game.value.getCellNeighbors(val);
+				const filledNeighborsA = neighborsA.filter(n => n.displayValue !== null);
+				const filledNeighborsB = neighborsB.filter(n => n.displayValue !== null);
+				const nAFillPercent = filledNeighborsA.length / neighborsA.length;
+				const nBFillPercent = filledNeighborsB.length / neighborsB.length;
+				const leastNeighbors = (nAFillPercent > nBFillPercent) ? acc : val;
+				const mostNeighbors = (nAFillPercent > nBFillPercent) ? val : acc;
+				const notConnected = (leastNeighbors.displayConnection) ? mostNeighbors : leastNeighbors;
+				// console.log(filledNeighborsA, filledNeighborsB, nAFillPercent, nBFillPercent, leastNeighbors, mostNeighbors, notConnected);
+				return notConnected;
+			});
+		}
 		for (const road of emptyCarNeighbors) {
 			road.display(null);
 		}
 		// console.log("chargerA", charger);
 
 		if (charger && !charger.displayConnection) {
-			charger.displayConnection = charger.getConnectionDirection(cell);
-			cell.displayConnection = cell.getConnectionDirection(charger);
-			charger.displayConnectedCar = cell;
-			cell.displayConnectedCharger = charger;
+			game.value.linkCarToCharger(cell, charger);
 		} else if (charger.displayConnection) {
 			const newCharger = recurseChargers(cell);
 			// console.log("newCharger", newCharger);
@@ -308,10 +197,7 @@ function editCell(cell, value) {
 				for (let i = seenIds.length - 1; i >= 0; i -= 2) {
 					const newCell = game.value.getCellById(seenIds[i]);
 					const newCell2 = game.value.getCellById(seenIds[i - 1]);
-					newCell.displayConnection = newCell.getConnectionDirection(newCell2);
-					newCell2.displayConnection = newCell2.getConnectionDirection(newCell);
-					newCell.displayConnectedCar = newCell2;
-					newCell2.displayConnectedCharger = newCell;
+					game.value.linkCarToCharger(newCell2, newCell);
 				}
 			}
 			seenIds = [];
@@ -321,16 +207,11 @@ function editCell(cell, value) {
 		const cars = game.value.getCellNeighbors(cell.displayConnectedCharger).filter(c => c.displayValue === 'car' && !c.displayConnection);
 		const charger = cell.displayConnectedCharger;
 		if (cars.length > 0) {
-			cars[0].displayConnection = cars[0].getConnectionDirection(charger);
-			charger.displayConnection = charger.getConnectionDirection(cars[0]);
-			cars[0].displayConnectedCharger = charger;
-			charger.displayConnectedCar = cars[0];
+			game.value.linkCarToCharger(cars[0], charger);
 		} else {
-			charger.displayConnection = null;
-			charger.displayConnectedCar = null;
+			charger.clearDisplayConnections();
 		}
-		cell.displayConnection = null;
-		cell.displayConnectedCharger = null;
+		cell.clearDisplayConnections();
 	} else if (unconnectedChargersWithAllNeighborsFilled.length > 0) {
 		for (const charger of unconnectedChargersWithAllNeighborsFilled) {
 			const neighbors = game.value.getCellNeighbors(charger)
@@ -340,23 +221,15 @@ function editCell(cell, value) {
 			});
 			const car = chargerConnectedCars[0];
 			const newCharger = car.displayConnectedCharger;
-			newCharger.displayConnection = null;
-			newCharger.displayConnectedCar = null;
-			car.displayConnection = car.getConnectionDirection(charger);
-			charger.displayConnection = charger.getConnectionDirection(car);
-			car.displayConnectedCharger = charger;
-			charger.displayConnectedCar = car;
+			newCharger.clearDisplayConnections();
+			game.value.linkCarToCharger(car, charger);
 		}
 	} else {
 		const connection = cell.displayConnectedCar ?? cell.displayConnectedCharger;
 		if (connection) {
-			connection.displayConnection = null;
-			connection.displayConnectedCar = null;
-			connection.displayConnectedCharger = null;
+			connection.clearDisplayConnections();
 		}
-		cell.displayConnection = null;
-		cell.displayConnectedCar = null;
-		cell.displayConnectedCharger = null;
+		cell.clearDisplayConnections();
 	}
 
 	countColor.value[`row-${cell.row}`] = getCountColor(cell.row, 'row');
@@ -507,35 +380,17 @@ h1 {
 	color: white;
 }
 
-.game-board-cells,
-.row-count-cells,
-.col-count-cells {
+.game-board-cells {
 	display: grid;
 	height: 100%;
 }
 
-.game-board-cells,
-.col-count-cells {
+.game-board-cells {
 	min-width: calc(v-bind(cols) * 1rem);
 }
 
-.game-board-cells,
-.row-count-cells {
+.game-board-cells {
 	min-height: calc(v-bind(rows) * 1.2rem);
-}
-
-.row-count-cells {
-	grid-area: row-count-cells;
-	min-width: 30px;
-}
-
-.col-count-cells {
-	grid-area: col-count-cells;
-	min-height: 30px;
-}
-
-.row-count-cells {
-	grid-template-rows: repeat(v-bind('rows'), minmax(0, 1fr));
 }
 
 .game-board-cells {
@@ -544,20 +399,15 @@ h1 {
 	background: #333;
 }
 
-.col-count-cells {
-	grid-template-columns: repeat(v-bind('cols'), minmax(0, 1fr));
+:deep(.row-count-cells) {
+	grid-area: row-count-cells;
 }
 
-.row-count,
-.col-count {
-	background: #222;
-	font-weight: bold;
-
+:deep(.col-count-cells) {
+	grid-area: col-count-cells;
 }
 
-.game-cell,
-.row-count,
-.col-count {
+.game-cell {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -565,20 +415,6 @@ h1 {
 	border-left: 1px solid #666;
 	text-align: center;
 	user-select: none;
-}
-
-.row-count {
-	padding: 0 0.1vw;
-}
-
-.col-count {
-	padding: 0.1vh 0;
-}
-
-.row-count-cells,
-.col-count-cells {
-	border-right: 1px solid #666;
-	border-bottom: 1px solid #666;
 }
 
 .game-cell span {
@@ -606,13 +442,13 @@ h1 {
 	line-height: 1;
 }
 
-.up {
+:deep(.up) {
 	font-size: calc((13vh + 13vw) / (v-bind('rows') + v-bind('cols')));
 }
 
-.down,
-.left,
-.right {
+:deep(.down),
+:deep(.left),
+:deep(.right) {
 	font-size: calc((10vh + 10vw) / (v-bind('rows') + v-bind('cols')));
 }
 

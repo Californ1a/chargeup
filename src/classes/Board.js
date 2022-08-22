@@ -230,4 +230,10 @@ export class Board {
 		}
 		return values;
 	}
+	linkCarToCharger(car, charger) {
+		car.displayConnection = car.getConnectionDirection(charger);
+		charger.displayConnection = charger.getConnectionDirection(car);
+		car.displayConnectedCharger = charger;
+		charger.displayConnectedCar = car;
+	}
 }
