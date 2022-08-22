@@ -103,8 +103,8 @@ const cellElements = ref(null);
 // const rows = basicBoard.length;
 // const cols = basicBoard[0].length;
 // const game = ref(new Board(basicBoard));
-const rows = 10;
-const cols = 15;
+const rows = 5; // 10;
+const cols = 7; // 15;
 const game = ref(new Board(rows, cols));
 
 const hues = {};
@@ -249,6 +249,7 @@ function recurseChargers(cell) {
 }
 
 function editCell(cell, value) {
+	if (game.value.endTime) return;
 	const oldValue = cell.displayValue;
 	cell.display(value);
 
@@ -371,6 +372,7 @@ function editCell(cell, value) {
 			const time = (game.value.getTime() / 1000).toFixed(2);
 			alert(`You win! Used ${game.value.hints.length} hints. Took ${time} seconds (${(time / placedCells.length).toFixed(2)} per cell & ${(time / cars.length).toFixed(2)} per car).`);
 		} else if (check === "wrong") {
+			game.value.endTime = null;
 			alert('Wrong!');
 		}
 		console.log(game.value.getAs('value'));
@@ -379,7 +381,7 @@ function editCell(cell, value) {
 }
 
 function clicking(e) {
-	if (e.buttons !== 1) return;
+	if (e.buttons !== 1 || game.value.endTime) return;
 	const x = e.clientX;
 	const y = e.clientY;
 	// which cell is mouse within given cellElements
@@ -399,7 +401,7 @@ function clicking(e) {
 
 function cellClicked(e) {
 	const cell = game.value.getCellFromElement(e.target);
-	if (cell.value === 'charge') return;
+	if (cell.value === 'charge' || game.value.endTime) return;
 	if (cell.displayValue === mode.value) {
 		markMode = false;
 		editCell(cell, null);
