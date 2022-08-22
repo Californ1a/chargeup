@@ -4,12 +4,13 @@ export class Board {
 	constructor(rows, cols) {
 		this.cells = [];
 		if (typeof rows === 'object' && rows instanceof Array) {
-			this.rows = rows.length;
-			this.cols = rows[0].length;
+			const boardMatrix = rows;
+			this.rows = boardMatrix.length;
+			this.cols = boardMatrix[0].length;
 			for (let i = 0; i < this.rows; i++) {
 				this.cells[i] = [];
 				for (let j = 0; j < this.cols; j++) {
-					this.cells[i][j] = new Cell(i, j, rows[i][j]);
+					this.cells[i][j] = new Cell(i, j, boardMatrix[i][j]);
 				}
 			}
 		} else {
@@ -116,15 +117,12 @@ export class Board {
 		}
 		let attempts = 0;
 		const maxAttempts = this.rows * this.cols * 15;
-		while (this.getFlatCells().filter(cell => cell.value === null).length > 0) {
+		while (this.getFlatCells().filter(cell => cell.value === null).length > 0 && attempts < maxAttempts) {
 			const randomRow = Math.floor(Math.random() * this.rows);
 			const randomCol = Math.floor(Math.random() * this.cols);
 			const cell = this.getCell(randomRow, randomCol);
 			if (cell.value !== null) {
 				attempts++;
-				if (attempts >= maxAttempts) {
-					break;
-				}
 				continue;
 			}
 
@@ -133,9 +131,6 @@ export class Board {
 			if (emptyChargerNeighbors.length === 0) {
 				// no empty neighbors so this cell can't be a charger
 				attempts++;
-				if (attempts >= maxAttempts) {
-					break;
-				}
 				continue;
 			}
 
@@ -157,9 +152,6 @@ export class Board {
 			if (allowsCar.length === 0) {
 				// no allowable cars for this charger location so this cell can't be a charger
 				attempts++;
-				if (attempts >= maxAttempts) {
-					break;
-				}
 				continue;
 			}
 
@@ -197,6 +189,8 @@ export class Board {
 				const chargerCell = this.setCell(charger.row, charger.col, 'charge');
 				carCell.setConnectedCharger(chargerCell);
 				chargerCell.setConnectedCar(carCell);
+			} else {
+				this.setCell(randomCar.row, randomCar.col, 'road');
 			}
 			remainingCells = this.getFlatCells().filter(cell => cell.value === null);
 			potentialCars = remainingCells.filter(c => this.getCellNeighborsWithDiagonal(c).filter(n => n.value === 'car').length === 0);
