@@ -318,6 +318,7 @@ function cellClicked(e) {
 }
 
 function onNewGame() {
+	mode.value = 'road';
 	const rowsColors = Array.apply(null, Array(game.value.rows)).reduce((acc, val, i) => ({
 		...acc,
 		[`row-${i}`]: getCountColor(i, 'row')
