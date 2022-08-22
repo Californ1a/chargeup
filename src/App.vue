@@ -243,7 +243,12 @@ function editCell(cell, value) {
 	setTimeout(() => {
 		if (check === "win") {
 			const time = (game.value.getTime() / 1000).toFixed(2);
-			alert(`You win! Used ${game.value.hints.length} hints. Took ${time} seconds (${(time / placedCells.length).toFixed(2)} per cell & ${(time / cars.length).toFixed(2)} per car).`);
+			const hints = game.value.hints.length;
+			const hintStr = `Used ${hints} hint${(hints.length > 0) ? "s" : ""}.`;
+			const perCell = (time / placedCells.length).toFixed(2);
+			const perCar = (time / cars.length).toFixed(2);
+			const timeStr = `Took ${time} seconds (${perCell} per cell & ${perCar} per car).`;
+			alert(`You win! ${hintStr} ${timeStr}`);
 		} else if (check === "wrong") {
 			game.value.endTime = null;
 			alert('Wrong!');
