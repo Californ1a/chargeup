@@ -115,82 +115,24 @@ export class Board {
 				this.cells[i][j] = new Cell(i, j, null);
 			}
 		}
-		let attempts = 0;
-		const maxAttempts = this.rows * this.cols * 15;
-		while (this.getFlatCells().filter(cell => cell.value === null).length > 0 && attempts < maxAttempts) {
-			const randomRow = Math.floor(Math.random() * this.rows);
-			const randomCol = Math.floor(Math.random() * this.cols);
-			const cell = this.getCell(randomRow, randomCol);
-			if (cell.value !== null) {
-				attempts++;
-				continue;
-			}
-
-			const chargerNeighbors = this.getCellNeighbors(cell);
-			const emptyChargerNeighbors = chargerNeighbors.filter(cell => cell.value === null);
-			if (emptyChargerNeighbors.length === 0) {
-				// no empty neighbors so this cell can't be a charger
-				attempts++;
-				continue;
-			}
-
-			const allowsCar = [];
-			for (const potentialCar of emptyChargerNeighbors) {
-				// Check if the potential car has any neighbors that are already a car
-				const carNeighbors = this.getCellNeighborsWithDiagonal(potentialCar);
-				const carNeighborsWithObject = carNeighbors.filter(cell => {
-					// Get cells with a car or charger, excluding the charger this car would be attached to
-					return cell.value === 'car'
-						|| (cell.value === 'charge' && cell.row !== randomRow && cell.col !== randomCol);
-				});
-				if (carNeighborsWithObject.length !== 0) continue;
-				// If there are no car neighbors, then we know there is at least one neighbor
-				// of the charger that can be a car
-				allowsCar.push(potentialCar);
-			}
-
-			if (allowsCar.length === 0) {
-				// no allowable cars for this charger location so this cell can't be a charger
-				attempts++;
-				continue;
-			}
-
-			// There was at least one place to put a car, so we can place the charger
-			const chargerCell = this.setCell(randomRow, randomCol, 'charge');
-			let randomEmptyChargerNeighbor;
-			let carNeighbors;
-			// We already know one of the neighbors allowed a car, so we can pick one of those
-			randomEmptyChargerNeighbor = allowsCar[Math.floor(Math.random() * allowsCar.length)];
-			carNeighbors = this.getCellNeighborsWithDiagonal(randomEmptyChargerNeighbor);
-			const carNeighborsWithObject = carNeighbors.filter(cell => cell.value === 'car');
-			if (carNeighborsWithObject.length === 0) {
-				const carCell = this.setCell(randomEmptyChargerNeighbor.row, randomEmptyChargerNeighbor.col, 'car');
-				carCell.setConnectedCharger(chargerCell);
-				chargerCell.setConnectedCar(carCell);
-			}
-			// Now set all the other neighbors to be road
-			const neighborsOfCarWithoutValue = carNeighbors.filter(cell => cell.value === null);
-			for (const cell of neighborsOfCarWithoutValue) {
-				if (cell.value === null) {
-					this.setCell(cell.row, cell.col, 'road');
-				}
-			}
-		}
-		console.log(this.getAs('value'));
-		// Attempt to place extra cars at unset cells
+		// Attempt to place cars at unset cells
 		let remainingCells = this.getFlatCells().filter(cell => cell.value === null);
 		let potentialCars = remainingCells.filter(c => this.getCellNeighborsWithDiagonal(c).filter(n => n.value === 'car').length === 0);
 		while (potentialCars.length > 0) {
-			const randomCar = potentialCars[Math.floor(Math.random() * potentialCars.length)];
-			const potentialChargers = this.getCellNeighbors(randomCar).filter(c => c.value === 'road' || c.value === null);
+			const potentialCar = potentialCars[Math.floor(Math.random() * potentialCars.length)];
+			const potentialChargers = this.getCellNeighbors(potentialCar).filter(c => c.value === 'road' || c.value === null);
 			if (potentialChargers.length > 0) {
-				const carCell = this.setCell(randomCar.row, randomCar.col, 'car');
+				const carCell = this.setCell(potentialCar.row, potentialCar.col, 'car');
 				const charger = potentialChargers[Math.floor(Math.random() * potentialChargers.length)];
 				const chargerCell = this.setCell(charger.row, charger.col, 'charge');
 				carCell.setConnectedCharger(chargerCell);
 				chargerCell.setConnectedCar(carCell);
+				const emptyCarNeighbors = this.getCellNeighborsWithDiagonal(carCell).filter(c => c.value === null);
+				for (const cell of emptyCarNeighbors) {
+					this.setCell(cell.row, cell.col, 'road');
+				}
 			} else {
-				this.setCell(randomCar.row, randomCar.col, 'road');
+				this.setCell(potentialCar.row, potentialCar.col, 'road');
 			}
 			remainingCells = this.getFlatCells().filter(cell => cell.value === null);
 			potentialCars = remainingCells.filter(c => this.getCellNeighborsWithDiagonal(c).filter(n => n.value === 'car').length === 0);
