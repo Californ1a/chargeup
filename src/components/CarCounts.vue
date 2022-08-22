@@ -28,18 +28,19 @@ function dealWithRowCol(rowOrCol, i, eType) {
 			cell.hover = false;
 			continue;
 		}
-		if (cell.displayValue !== props.mode.value) {
+		if (cell.displayValue !== props.mode) {
 			cellsToChange.push(cell);
 		} else {
 			cellsToNull.push(cell);
 		}
 	}
+	// console.log(cellsToChange, cellsToNull);
 	if (cellsToChange.length > 0) {
 		for (const cell of cellsToChange) {
 			if (typeof eType === 'boolean') {
 				cell.hover = eType;
 			} else {
-				props.editCell(cell, props.mode.value);
+				props.editCell(cell, props.mode);
 			}
 		}
 	} else {

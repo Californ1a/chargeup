@@ -437,7 +437,7 @@ h1 {
 	transition: background 0s linear;
 }
 
-.game-cell .emoji {
+.game-cell :deep(.emoji) {
 	font-size: calc((20vh + 20vw) / (v-bind('rows') + v-bind('cols')));
 	line-height: 1;
 }
