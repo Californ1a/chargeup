@@ -113,10 +113,16 @@ onMounted(async () => {
 		listeners: {
 			persistenceGranted: () => {
 				console.log("User granted persistence");
+				toast.info(`Persistence granted!\nGame saves will be stored unless manually cleared by you.`, {
+					timeout: 10000
+				});
 				localStorage.setItem('persist', 'granted');
 			},
 			persistenceDenied: () => {
 				console.log("User denied persistence");
+				toast.info(`Couldn't get persistence.\nYour browser may automatically delete game saves after a while.`, {
+					timeout: 10000
+				});
 				localStorage.setItem('persist', 'denied');
 			}
 		}

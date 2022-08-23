@@ -2,7 +2,7 @@
 	<div class="container">
 		<div class="inner-container">
 			<h1>Hold up!</h1>
-			<p>Failed to save board. User interaction required.</p>
+			<p>Failed to persist board. User interaction required. Without persistence, the browser may automatically clear game saves.</p>
 		</div>
 		<button
 			class="action"
@@ -33,17 +33,15 @@ async function clicked() {
 }
 
 .action {
-	height: 40px;
-	padding: 5px 10px;
+	/* height: 40px; */
+	padding: 10px 9px;
 	border-radius: 5px;
 	color: #fff;
 	cursor: pointer;
 	border: thin solid currentColor;
 	background-color: #ffffff22;
-}
-
-.inner-container {
-	padding-right: 30px;
+	font-weight: bold;
+	font-size: 1rem;
 }
 
 .action:hover {
