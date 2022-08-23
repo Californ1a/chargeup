@@ -43,13 +43,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onBeforeMount } from 'vue';
+import { ref, onMounted, watchEffect, onBeforeMount } from 'vue';
 import { useToast } from 'vue-toastification';
 import SimpleLoading from './components/SimpleLoading.vue';
 import GameControls from './components/GameControls.vue';
 import RulesModal from './components/RulesModal.vue';
 import EmojiCell from './components/EmojiCell.vue';
 import CarCounts from './components/CarCounts.vue';
+import ToastButton from './components/ToastButton.vue';
 import { db } from './store/db';
 import { tryPersistWithoutPromtingUser } from './store/persistance';
 import { Board } from './classes/Board';
@@ -98,16 +99,15 @@ onBeforeMount(async () => {
 		game.value = new Board(defaultRows, defaultCols);
 		mode.value = 'road';
 	}
-	onNewGame();
-	unwatch = watch(cellElements, setupCellElementRefs, {
-		flush: 'post',
-		immediate: true
+	unwatch = watchEffect(setupCellElementRefs, {
+		flush: 'post'
 	});
-	doneLoading.value = true;
+	onNewGame();
 });
 
 onMounted(async () => {
 	persist.value = await tryPersistWithoutPromtingUser();
+	// persist.value = 'prompt';
 	switch (persist.value) {
 		case "never":
 			console.log("Not possible to persist storage");
@@ -117,26 +117,36 @@ onMounted(async () => {
 			break;
 		case "prompt":
 			console.log("Not persisted, but we may prompt user when we want to.");
+			toast.error(ToastButton, {
+				position: 'top-center',
+				timeout: false,
+				closeOnClick: false,
+				draggable: false,
+				showCloseButtonOnHover: false,
+				hideProgressBar: true,
+				closeButton: false
+			});
 			break;
 	}
+	console.log("game", game.value);
 });
 
 function setupCellElementRefs() {
-	if (cellElements.value) {
-		for (let i = 0; i < cellElements.value.length; i++) {
-			const cell = game.value.getCellFromElement(cellElements.value[i]);
-			cell.element = cellElements.value[i];
-			if (cell.value === 'charge') {
-				if (i === cellElements.value.length - 1) {
-					editCell(cell, 'charge', true);
-				} else {
-					editCell(cell, 'charge', false);
-				}
+	if (!cellElements.value) return;
+	console.log("setupCellElementRefs", cellElements.value);
+	for (let i = 0; i < cellElements.value.length; i++) {
+		const cell = game.value.getCellFromElement(cellElements.value[i]);
+		cell.element = cellElements.value[i];
+		if (cell.value === 'charge') {
+			if (i === cellElements.value.length - 1) {
+				editCell(cell, 'charge', true);
+			} else {
+				editCell(cell, 'charge', false);
 			}
 		}
-		if (unwatch && unwatch instanceof Function) {
-			unwatch();
-		}
+	}
+	if (unwatch && unwatch instanceof Function) {
+		unwatch();
 	}
 }
 
@@ -149,9 +159,8 @@ async function newGame(e, rowCount, colCount) {
 	mode.value = 'road';
 	await db.currentGame.clear();
 	game.value = new Board(rowCount, colCount);
-	unwatch = watch(cellElements, setupCellElementRefs, {
-		flush: 'post',
-		immediate: true
+	unwatch = watchEffect(setupCellElementRefs, {
+		flush: 'post'
 	});
 	onNewGame();
 }
