@@ -1,7 +1,7 @@
 import { Cell } from './Cell';
 
 export class Board {
-	constructor(rows, cols) {
+	constructor(rows = 0, cols = 0) {
 		this.id = Math.random().toString(36).substring(2, 11);
 		this.cells = [];
 		if (typeof rows === 'object' && rows instanceof Array) {
@@ -17,11 +17,20 @@ export class Board {
 		} else {
 			this.rows = rows;
 			this.cols = cols;
-			this.generateBoard();
+			if (this.rows > 1 || this.cols > 1) {
+				this.generateBoard();
+			}
 		}
 		this.hints = [];
 		this.startTime = null;
 		this.endTime = null;
+		this.previousDuration = 0;
+	}
+	setId(id) {
+		this.id = id;
+	}
+	setPreviousDuration(duration) {
+		this.previousDuration = duration;
 	}
 	setStartTime() {
 		this.startTime = performance.now();
@@ -32,7 +41,7 @@ export class Board {
 		return this.endTime;
 	}
 	getTime() {
-		return (this.endTime) ? this.endTime - this.startTime : null;
+		return (this.endTime) ? this.endTime - this.startTime + this.previousDuration : performance.now() - this.startTime + this.previousDuration;
 	}
 	getCell(row, col) {
 		return this.cells[row][col];
@@ -164,12 +173,36 @@ export class Board {
 		if (incorrectCells.length === 0) return null;
 		const randomCell = incorrectCells[Math.floor(Math.random() * incorrectCells.length)];
 		return randomCell;
-
+	}
+	getHintList() {
+		if (this.hints.length === 0) return [];
+		const values = [...this.hints];
+		return values.map(cell => ({ row: cell.row, col: cell.col }));
+	}
+	setHintList(hints) {
+		this.hints = hints.map(hint => this.getCell(hint.row, hint.col));
 	}
 	getAs(type) {
 		const values = [...this.cells];
-		for (let i = 0; i < this.rows; i++) {
-			values[i] = values[i].map(cell => cell[type]);
+		if (type === 'state') {
+			return values.map(row => row.map(cell => ({
+				row: cell.row,
+				col: cell.col,
+				value: cell.value,
+				correct: cell.correct,
+				displayValue: cell.displayValue,
+				hint: cell.hint,
+				displayConnectedCharger: cell.displayConnectedCharger ? { row: cell.displayConnectedCharger.row, col: cell.displayConnectedCharger.col } : null,
+				displayConnectedCar: cell.displayConnectedCar ? { row: cell.displayConnectedCar.row, col: cell.displayConnectedCar.col } : null,
+				displayConnection: cell.displayConnection,
+				carIcon: cell.carIcon,
+				randomHue: cell.randomHue,
+				randomSaturate: cell.randomSaturate,
+			})));
+		} else {
+			for (let i = 0; i < this.rows; i++) {
+				values[i] = values[i].map(cell => cell[type]);
+			}
 		}
 		return values;
 	}
@@ -178,5 +211,28 @@ export class Board {
 		charger.displayConnection = charger.getConnectionDirection(car);
 		car.displayConnectedCharger = charger;
 		charger.displayConnectedCar = car;
+	}
+	setState(board) {
+		if (board.length !== this.rows || board[0].length !== this.cols) {
+			throw new Error('Board size does not match');
+		}
+		console.log("board", board);
+		for (let i = 0; i < this.rows; i++) {
+			for (let j = 0; j < this.cols; j++) {
+				const cell = this.getCell(i, j);
+				const cellState = board[i][j];
+				cell.value = cellState.value;
+				cell.correct = cellState.correct;
+				cell.displayValue = cellState.displayValue;
+				cell.hint = cellState.hint;
+				cell.displayConnectedCharger = cellState.displayConnectedCharger ? this.getCell(cellState.displayConnectedCharger.row, cellState.displayConnectedCharger.col) : null;
+				cell.displayConnectedCar = cellState.displayConnectedCar ? this.getCell(cellState.displayConnectedCar.row, cellState.displayConnectedCar.col) : null;
+				cell.displayConnection = cellState.displayConnection;
+				cell.carIcon = cellState.carIcon;
+				cell.randomHue = cellState.randomHue;
+				cell.randomSaturate = cellState.randomSaturate;
+			}
+		}
+		console.log("this.cells", this.cells);
 	}
 }

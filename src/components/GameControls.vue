@@ -15,6 +15,7 @@
 			<ControlButton :mode="mode" btnType="road" @update:modelValue="$emit('update:modelValue', $event.target.value)" />
 		</div>
 		<div class="right-control-group">
+			<button v-if="persist === 'prompt' && !persisted" @click="tryGetPersistance">Enable Persistance</button>
 			<!-- <button class="btn btn-primary" @click="$emit('start')">Start</button>
 			<button class="btn btn-primary" @click="$emit('clear')">Clear</button> -->
 		</div>
@@ -24,7 +25,7 @@
 <script setup>
 import { ref } from 'vue';
 import ControlButton from './ControlButton.vue';
-const props = defineProps(['mode', 'game']);
+const props = defineProps(['mode', 'game', 'persist']);
 
 const rowValue = ref(+props.game.rows);
 const colValue = ref(+props.game.cols);
@@ -35,6 +36,11 @@ function updateRows(e) {
 
 function updateCols(e) {
 	colValue.value = e.target.value;
+}
+
+let persisted = false;
+async function tryGetPersistance() {
+	persisted = await navigator.storage.persist();
 }
 </script>
 
