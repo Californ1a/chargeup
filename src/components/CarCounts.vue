@@ -16,6 +16,21 @@ const props = defineProps(['game', 'type', 'color', 'mode', 'editCell']);
 
 const rowColCount = (props.type === 'row') ? props.game.cells : props.game.cells[0];
 
+function editCells(cells, type, val) {
+	for (let i = 0; i < cells.length; i++) {
+		const cell = cells[i];
+		if (typeof type === 'boolean') {
+			cell.hover = type;
+		} else {
+			if (i === cells.length - 1) {
+				props.editCell(cell, val);
+			} else {
+				props.editCell(cell, val, false);
+			}
+		}
+	}
+}
+
 function dealWithRowCol(rowOrCol, i, eType) {
 	const rowCol = (rowOrCol === 'row') ? props.game.getRow(i) : props.game.getCol(i);
 	const cellsToChange = [];
@@ -36,21 +51,9 @@ function dealWithRowCol(rowOrCol, i, eType) {
 	}
 	// console.log(cellsToChange, cellsToNull);
 	if (cellsToChange.length > 0) {
-		for (const cell of cellsToChange) {
-			if (typeof eType === 'boolean') {
-				cell.hover = eType;
-			} else {
-				props.editCell(cell, props.mode);
-			}
-		}
+		editCells(cellsToChange, eType, props.mode);
 	} else {
-		for (const cell of cellsToNull) {
-			if (typeof eType === 'boolean') {
-				cell.hover = eType;
-			} else {
-				props.editCell(cell, null);
-			}
-		}
+		editCells(cellsToNull, eType, null);
 	}
 }
 

@@ -177,4 +177,39 @@ async function tryGetPersistance() {
 .main-control-group :deep(.control label.selected) {
 	background: #444;
 }
+
+.new-game {
+	font-size: 0.9rem;
+	color: orange;
+	background: #111;
+	border: 1px solid #ffa50099;
+	border-radius: 5px;
+	font-weight: normal;
+	padding: 2px 10px 2px 10px;
+	cursor: pointer;
+	width: 100%;
+	margin: 0 auto 5px auto;
+}
+
+.new-game:hover {
+	background: #222;
+	border: 1px solid #ffa500aa;
+}
+
+.new-game:active {
+	background: #333;
+	border: 1px solid #ffa500bb;
+}
+
+.new-game:focus {
+	outline: none;
+}
+
+input[type="range"] {
+	cursor: grab;
+}
+
+input[type="range"]:active {
+	cursor: grabbing;
+}
 </style>

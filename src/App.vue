@@ -7,8 +7,10 @@
 				<button @click="getHint">Hint</button>
 			</div>
 		</div>
-		<SimpleLoading v-if="game.rows === 0 || game.cols === 0" />
-		<div v-else :key="game.id">
+		<SimpleLoading v-if="game.rows === 0 || game.cols === 0 || visibleChargerCount() === 0 || !doneLoading" />
+		<div :class="{
+			hidden: visibleChargerCount() === 0 || !doneLoading,
+		}" :key="game.id">
 			<div class="game-board-cells" @mousemove="clicking">
 				<div ref="cellElements" v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
 					@mousedown="cellClicked"
@@ -29,15 +31,20 @@
 				</div>
 			</div>
 		</div>
-		<CarCounts :key="game.id" :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
-		<CarCounts :key="game.id" :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
+		<CarCounts :class="{
+			hidden: visibleChargerCount() === 0,
+		}" :key="game.id" :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
+		<CarCounts :class="{
+			hidden: visibleChargerCount() === 0,
+		}" :key="game.id" :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
 		<GameControls :key="game.id" :mode="mode" :game="game" @update:modelValue="updateMode" @new-game="newGame" :persist="persist" />
 	</div>
 	<RulesModal :display="rulesModalDisplay" :close="closeRulesModal" />
 </template>
 
 <script setup>
-import { ref, onMounted, watchEffect, onBeforeMount } from 'vue';
+import { ref, onMounted, watch, onBeforeMount } from 'vue';
+import { useToast } from 'vue-toastification';
 import SimpleLoading from './components/SimpleLoading.vue';
 import GameControls from './components/GameControls.vue';
 import RulesModal from './components/RulesModal.vue';
@@ -49,66 +56,121 @@ import { Board } from './classes/Board';
 // import basicBoard from './assets/basicBoard';
 
 const cellElements = ref([]);
-let unwatch;
-
 const game = ref(new Board());
 const mode = ref(null);
+const doneLoading = ref(false);
+const toast = useToast();
+const persist = ref(null);
+const countColor = ref({});
+const rulesModalDisplay = ref('none');
+let lastDraggedCellVal = null;
+let markMode = true;
+let seenIds = [];
+let unwatch;
 
 onBeforeMount(async () => {
+	// standard sizes are 5x7, 7x10, and 10x14
 	const defaultRows = 10;
 	const defaultCols = 15;
 	const currentGame = await db.currentGame.orderBy('date').reverse().limit(1).first();
-	const mostRecentGame = await db.games.orderBy('date').reverse().limit(1).first();
-	if (currentGame) {
+	const recentCompleteGame = await db.games.orderBy('date').reverse().limit(1).first();
+	if (currentGame?.display.flat().filter(c => c.displayValue !== null && c.displayValue !== 'charge').length > 0) {
 		console.log("Loaded existing game", currentGame);
+		toast.success("Loaded in-progress game!");
 		game.value = new Board(currentGame.board);
 		game.value.setHintList(currentGame.hints);
 		game.value.setPreviousDuration(currentGame.time);
-		game.value.setStartTime();
 		game.value.setState(currentGame.display);
+		game.value.setStartTime(); // immedaitely start the timer because it's an existing game with tiles already placed
 		game.value.setId(currentGame.id);
 		mode.value = currentGame.mode;
-	} else if (mostRecentGame) {
-		console.log("Loaded most recent finished game", mostRecentGame);
-		game.value = new Board(mostRecentGame.rows, mostRecentGame.cols);
+	} else if (currentGame || recentCompleteGame) {
+		console.log("Got row/col count from empty existing game or most recent finished game", currentGame, recentCompleteGame);
+		const initRows = currentGame ? currentGame.board.length : recentCompleteGame.rows;
+		const initCols = currentGame ? currentGame.board[0].length : recentCompleteGame.cols;
+		game.value = new Board(initRows, initCols);
 		mode.value = 'road';
+		if (currentGame) {
+			await db.currentGame.clear();
+		}
 	} else {
-		console.log("No previous game found, using defaults", defaultRows, defaultCols);
+		console.log("No in-progress or previous game found, using default row/col", defaultRows, defaultCols);
 		game.value = new Board(defaultRows, defaultCols);
 		mode.value = 'road';
 	}
-	// console.log("Most recent game:", mostRecentGame);
 	onNewGame();
-	unwatch = watchEffect(setupChargers, {
-		flush: 'post'
+	unwatch = watch(cellElements, setupCellElementRefs, {
+		flush: 'post',
+		immediate: true
 	});
-	// const game = ref(new Board(initialRows, initialCols));
+	doneLoading.value = true;
 });
 
-// standard sizes are 5x7, 7x10, and 10x14
+onMounted(async () => {
+	persist.value = await tryPersistWithoutPromtingUser();
+	switch (persist.value) {
+		case "never":
+			console.log("Not possible to persist storage");
+			break;
+		case "persisted":
+			console.log("Successfully persisted storage silently");
+			break;
+		case "prompt":
+			console.log("Not persisted, but we may prompt user when we want to.");
+			break;
+	}
+});
 
-// const rows = basicBoard.length;
-// const cols = basicBoard[0].length;
-// const game = ref(new Board(basicBoard));
-
-
-const persist = ref(null);
-
-const countColor = ref({});
-const rulesModalDisplay = ref('none');
-
-function setupChargers() {
+function setupCellElementRefs() {
 	if (cellElements.value) {
-		for (const cellEle of cellElements.value) {
-			const cell = game.value.getCellFromElement(cellEle);
-			cell.element = cellEle;
+		for (let i = 0; i < cellElements.value.length; i++) {
+			const cell = game.value.getCellFromElement(cellElements.value[i]);
+			cell.element = cellElements.value[i];
 			if (cell.value === 'charge') {
-				editCell(cell, 'charge');
-				// console.log(cell.getConnectionDirection());
+				if (i === cellElements.value.length - 1) {
+					editCell(cell, 'charge', true);
+				} else {
+					editCell(cell, 'charge', false);
+				}
 			}
 		}
-		unwatch();
+		if (unwatch && unwatch instanceof Function) {
+			unwatch();
+		}
 	}
+}
+
+async function newGame(e, rowCount, colCount) {
+	if (game.value.startTime && !game.value.endTime) {
+		const confirmation = confirm(`Give up your current game and start a new one?`);
+		if (!confirmation) return;
+	}
+	doneLoading.value = false;
+	mode.value = 'road';
+	await db.currentGame.clear();
+	game.value = new Board(rowCount, colCount);
+	unwatch = watch(cellElements, setupCellElementRefs, {
+		flush: 'post',
+		immediate: true
+	});
+	onNewGame();
+}
+
+function onNewGame() {
+	const rowsColors = Array.apply(null, Array(game.value.rows)).reduce((acc, val, i) => ({
+		...acc,
+		[`row-${i}`]: getCountColor(i, 'row')
+	}), {});
+	const colsColors = Array.apply(null, Array(game.value.cols)).reduce((acc, val, i) => ({
+		...acc,
+		[`col-${i}`]: getCountColor(i, 'col')
+	}), {});
+	countColor.value = { ...rowsColors, ...colsColors };
+	doneLoading.value = true;
+}
+
+function visibleChargerCount() {
+	return game.value.getFlatCells().filter(c => c.displayValue === 'charge').length;
 }
 
 function getHint() {
@@ -122,18 +184,6 @@ function getHint() {
 	game.value.hints.push(hintCell);
 }
 
-function newGame(e, rowCount, colCount) {
-	if (game.value.startTime && !game.value.endTime) {
-		const confirmation = confirm(`Give up your current game and start a new one?`);
-		if (!confirmation) return;
-	}
-	game.value = new Board(rowCount, colCount);
-	onNewGame();
-	unwatch = watchEffect(setupChargers, {
-		flush: 'post'
-	});
-}
-
 function openRulesModal() {
 	rulesModalDisplay.value = 'flex';
 }
@@ -141,8 +191,6 @@ function openRulesModal() {
 function closeRulesModal() {
 	rulesModalDisplay.value = 'none';
 }
-
-let markMode = true;
 
 function updateMode(newMode) {
 	mode.value = newMode;
@@ -157,8 +205,6 @@ function getCountColor(i, type) {
 	}
 	return 'white';
 }
-
-let seenIds = [];
 
 // search backward from car to charger until finding a charger with no connection
 function recurseChargers(cell) {
@@ -203,7 +249,7 @@ function recurseChargers(cell) {
 	}
 }
 
-function editCell(cell, value) {
+function editCell(cell, value, save = true) {
 	if (game.value.endTime) return;
 	const oldValue = cell.displayValue;
 	cell.display(value);
@@ -307,15 +353,17 @@ function editCell(cell, value) {
 	countColor.value[`row-${cell.row}`] = getCountColor(cell.row, 'row');
 	countColor.value[`col-${cell.col}`] = getCountColor(cell.col, 'col');
 
-	db.currentGame.put({
-		id: game.value.id,
-		date: new Date(),
-		time: game.value.getTime(),
-		hints: game.value.getHintList(),
-		board: game.value.getAs('value'),
-		display: game.value.getAs('state'),
-		mode: mode.value
-	});
+	if (save) {
+		db.currentGame.put({
+			id: game.value.id,
+			date: new Date(),
+			time: game.value.getTime(),
+			hints: game.value.getHintList(),
+			board: game.value.getAs('value'),
+			display: game.value.getAs('state'),
+			mode: mode.value
+		});
+	}
 
 	const check = game.value.checkBoard();
 	if (!check) return;
@@ -324,11 +372,11 @@ function editCell(cell, value) {
 	const cars = game.value.getFlatCells().filter(c => c.value === 'car');
 	setTimeout(async () => {
 		if (check === "win") {
-			const time = (game.value.getTime() / 1000).toFixed(2);
+			const time = (game.value.getTime() / 1000).toFixed(3);
 			const hints = game.value.hints.length;
-			const hintStr = `Used ${hints} hint${(hints.length > 0) ? "s" : ""}.`;
-			const perCell = (time / placedCells.length).toFixed(2);
-			const perCar = (time / cars.length).toFixed(2);
+			const hintStr = `Used ${hints} hint${(hints.length === 1) ? "" : "s"}.`;
+			const perCell = (time / placedCells.length).toFixed(3);
+			const perCar = (time / cars.length).toFixed(3);
 			const timeStr = `Took ${time} seconds (${perCell} per cell & ${perCar} per car).`;
 			alert(`You win! ${hintStr} ${timeStr}`);
 			try {
@@ -343,7 +391,9 @@ function editCell(cell, value) {
 					cols: game.value.cols,
 					hints: game.value.getHintList(),
 				});
-				console.log(`Inserted new game to db with id ${entry.id}.`);
+				console.log(`Inserted new game to finsihed games with id ${entry.id}.`);
+				await db.currentGame.clear();
+				console.log("Deleted current game from db.");
 			} catch (e) {
 				console.error(`Error inserting new game to db: ${e}`);
 			}
@@ -355,8 +405,6 @@ function editCell(cell, value) {
 		console.log(game.value.getAs('correct'));
 	}, 50);
 }
-
-let lastDraggedCellVal = null;
 
 function clicking(e) {
 	if (e.buttons !== 1 || game.value.endTime) {
@@ -392,43 +440,6 @@ function cellClicked(e) {
 		editCell(cell, mode.value);
 	}
 }
-
-function onNewGame() {
-	const rowsColors = Array.apply(null, Array(game.value.rows)).reduce((acc, val, i) => ({
-		...acc,
-		[`row-${i}`]: getCountColor(i, 'row')
-	}), {});
-	const colsColors = Array.apply(null, Array(game.value.cols)).reduce((acc, val, i) => ({
-		...acc,
-		[`col-${i}`]: getCountColor(i, 'col')
-	}), {});
-	countColor.value = { ...rowsColors, ...colsColors };
-}
-
-onMounted(async () => {
-	console.log(game);
-	for (const cellEle of cellElements.value) {
-		const cell = game.value.getCellFromElement(cellEle);
-		cell.element = cellEle;
-		if (cell.value === 'charge') {
-			editCell(cell, 'charge');
-			// console.log(cell.getConnectionDirection());
-		}
-	}
-	onNewGame();
-	persist.value = await tryPersistWithoutPromtingUser();
-	switch (persist.value) {
-		case "never":
-			console.log("Not possible to persist storage");
-			break;
-		case "persisted":
-			console.log("Successfully persisted storage silently");
-			break;
-		case "prompt":
-			console.log("Not persisted, but we may prompt user when we want to.");
-			break;
-	}
-});
 </script>
 
 <style scoped>
@@ -486,6 +497,15 @@ onMounted(async () => {
 	border: 1px solid #ffa500aa;
 }
 
+.header button:active {
+	background: #333;
+	border: 1px solid #ffa500bb;
+}
+
+.header button:focus {
+	outline: none;
+}
+
 h1 {
 	color: #fff;
 	background: #333333aa;
@@ -496,6 +516,10 @@ h1 {
 
 .count {
 	color: white;
+}
+
+.hidden {
+	display: none;
 }
 
 .game-board-cells {

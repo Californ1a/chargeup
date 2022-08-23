@@ -27,7 +27,7 @@ function ellipsis() {
 			loadingText.value += '.';
 		}
 		attempts++;
-	}, 500);
+	}, 300);
 }
 
 function setLoadingText(text = "Generating") {
