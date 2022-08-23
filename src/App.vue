@@ -70,6 +70,10 @@ function getHint() {
 }
 
 function newGame(e, rowCount, colCount) {
+	if (game.value.startTime && !game.value.endTime) {
+		const confirmation = confirm(`Give up your current game and start a new one?`);
+		if (!confirmation) return;
+	}
 	game.value = new Board(rowCount, colCount);
 	onNewGame();
 	const unwatch = watchEffect(() => {
