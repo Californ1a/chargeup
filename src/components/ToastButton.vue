@@ -1,6 +1,9 @@
 <template>
 	<div class="container">
-		<span>Failed to save board.</span>
+		<div class="inner-container">
+			<h1>Hold up!</h1>
+			<p>Failed to save board. User interaction required.</p>
+		</div>
 		<button
 			class="action"
 			@click.stop="clicked">Save</button>
@@ -8,12 +11,14 @@
 </template>
 
 <script setup>
-const emit = defineEmits(['close-toast']);
+const emit = defineEmits(['close-toast', 'persistenceGranted', 'persistenceDenied']);
 async function clicked() {
 	const persist = await navigator.storage.persist();
 	if (persist) {
+		emit('persistenceGranted');
 		emit('close-toast');
 	} else {
+		emit('persistenceDenied');
 		emit('close-toast');
 	}
 }
@@ -21,7 +26,7 @@ async function clicked() {
 
 <style scoped>
 .container {
-	width: 100%;
+	/* width: 20vw; */
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
@@ -35,6 +40,10 @@ async function clicked() {
 	cursor: pointer;
 	border: thin solid currentColor;
 	background-color: #ffffff22;
+}
+
+.inner-container {
+	padding-right: 30px;
 }
 
 .action:hover {

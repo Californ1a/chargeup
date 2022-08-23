@@ -107,25 +107,46 @@ onBeforeMount(async () => {
 
 onMounted(async () => {
 	persist.value = await tryPersistWithoutPromtingUser();
-	// persist.value = 'prompt';
+	persist.value = 'prompt';
+	const toastContent = {
+		component: ToastButton,
+		listeners: {
+			persistenceGranted: () => {
+				console.log("User granted persistence");
+				localStorage.setItem('persist', 'granted');
+			},
+			persistenceDenied: () => {
+				console.log("User denied persistence");
+				localStorage.setItem('persist', 'denied');
+			}
+		}
+	}
 	switch (persist.value) {
 		case "never":
 			console.log("Not possible to persist storage");
+			localStorage.setItem('persist', 'denied');
 			break;
 		case "persisted":
 			console.log("Successfully persisted storage silently");
+			localStorage.setItem('persist', 'granted');
 			break;
 		case "prompt":
 			console.log("Not persisted, but we may prompt user when we want to.");
-			toast.error(ToastButton, {
-				position: 'top-center',
-				timeout: false,
-				closeOnClick: false,
-				draggable: false,
-				showCloseButtonOnHover: false,
-				hideProgressBar: true,
-				closeButton: false
-			});
+			if (localStorage.getItem('persist') === 'denied') {
+				console.log("User has previously denied persistence, not prompting");
+				break;
+			} else {
+				console.log("User has not previously denied persistence, prompting");
+				toast.error(toastContent, {
+					position: 'top-center',
+					timeout: false,
+					closeOnClick: false,
+					draggable: false,
+					showCloseButtonOnHover: false,
+					hideProgressBar: true,
+					closeButton: false
+				});
+			}
 			break;
 	}
 	console.log("game", game.value);
