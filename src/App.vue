@@ -7,9 +7,9 @@
 				<button @click="getHint">Hint</button>
 			</div>
 		</div>
-		<SimpleLoading v-if="game.rows === 0 || game.cols === 0 || visibleChargerCount() === 0 || !doneLoading" />
+		<SimpleLoading v-if="loading" />
 		<div :class="{
-			hidden: visibleChargerCount() === 0 || !doneLoading,
+			hidden: loading,
 		}" :key="game.id">
 			<div class="game-board-cells">
 				<div ref="cellElements" v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
@@ -22,10 +22,10 @@
 					hint: cell.hint,
         }">
 					<span v-if="cell.displayValue === 'charge'" class="emoji">
-						<EmojiCell type="charge" :cell="cell" :key="cell.displayConnectedCar" />
+						<EmojiCell :cell="cell" :rows="game.rows" :cols="game.cols" type="charge" :key="cell.displayConnectedCar" />
 					</span>
 					<span v-else-if="cell.displayValue === 'car'" class="emoji">
-						<EmojiCell type="car" :cell="cell" />
+						<EmojiCell :cell="cell" :rows="game.rows" :cols="game.cols" type="car" />
 					</span>
 					<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
 					<span v-else>&nbsp;</span>
@@ -33,18 +33,18 @@
 			</div>
 		</div>
 		<CarCounts :class="{
-			hidden: visibleChargerCount() === 0,
+			hidden: loading,
 		}" :key="game.id" :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
 		<CarCounts :class="{
-			hidden: visibleChargerCount() === 0,
+			hidden: loading,
 		}" :key="game.id" :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
-		<GameControls :key="game.id" :mode="mode" :game="game" @update:modelValue="updateMode" @new-game="newGame" :persist="persist" />
+		<GameControls :key="game.id" :mode="mode" :game="game" @update:modelValue="updateMode" @new-game="newGameBtn" :persist="persist" />
 	</div>
 	<RulesModal :display="rulesModalDisplay" :close="closeRulesModal" />
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeMount } from 'vue';
+import { ref, reactive, onMounted, onBeforeMount, computed } from 'vue';
 import { useToast } from 'vue-toastification';
 import SimpleLoading from './components/SimpleLoading.vue';
 import GameControls from './components/GameControls.vue';
@@ -89,6 +89,7 @@ const persistToastContent = {
 };
 
 onBeforeMount(async () => {
+	doneLoading.value = false;
 	// standard sizes are 5x7, 7x10, and 10x14
 	const defaultRows = 10;
 	const defaultCols = 15;
@@ -118,7 +119,7 @@ onBeforeMount(async () => {
 		Object.assign(game, new Board(defaultRows, defaultCols));
 		mode.value = 'road';
 	}
-	onNewGame();
+	doneLoading.value = true;
 });
 
 onMounted(async () => {
@@ -150,7 +151,7 @@ onMounted(async () => {
 	console.log("game", game);
 });
 
-async function newGame(e, rowCount, colCount) {
+async function newGameBtn(e, rowCount, colCount) {
 	const placedCells = game.getFlatCells().filter(c => c.displayValue !== null && c.displayValue !== 'charge');
 	if (game.startTime && !game.endTime && placedCells.length > 0) {
 		const confirmation = confirm(`Give up your current game and start a new one?`);
@@ -160,24 +161,7 @@ async function newGame(e, rowCount, colCount) {
 	mode.value = 'road';
 	await db.currentGame.clear();
 	Object.assign(game, new Board(rowCount, colCount));
-	onNewGame();
-}
-
-function onNewGame() {
-	const rowsColors = Array.apply(null, Array(game.rows)).reduce((acc, val, i) => ({
-		...acc,
-		[`row-${i}`]: getCountColor(i, 'row')
-	}), {});
-	const colsColors = Array.apply(null, Array(game.cols)).reduce((acc, val, i) => ({
-		...acc,
-		[`col-${i}`]: getCountColor(i, 'col')
-	}), {});
-	countColor.value = { ...rowsColors, ...colsColors };
 	doneLoading.value = true;
-}
-
-function visibleChargerCount() {
-	return game.getFlatCells().filter(c => c.displayValue === 'charge').length;
 }
 
 function getHint() {
@@ -201,16 +185,6 @@ function closeRulesModal() {
 
 function updateMode(newMode) {
 	mode.value = newMode;
-}
-
-function getCountColor(i, type) {
-	const getFunc = "get" + type.charAt(0).toUpperCase() + type.slice(1);
-	const cars = game[getFunc](i).filter(c => c.value === 'car');
-	const displayedCars = game[getFunc](i).filter(c => c.displayValue === 'car');
-	if (displayedCars.length === cars.length) {
-		return 'green';
-	}
-	return 'white';
 }
 
 // search backward from car to charger until finding a charger with no connection
@@ -278,12 +252,9 @@ function editCell(cell, value, save = true) {
 		return !hasConnection && filledNeighborsPercent === 1 && carNeighbors.length > 0 && chargerConnectedCars.length > 0;
 	});
 
-	// console.log("unconnectedChargersWithAllNeighborsFilled", unconnectedChargersWithAllNeighborsFilled);
-
 	if (value === 'car' && chargers.length > 0) {
 		// when placing a car next to a charger
 		const emptyCarNeighbors = game.getCellNeighborsWithDiagonal(cell).filter(c => c.displayValue === null);
-		// console.log("chargersA", chargers);
 		for (const road of emptyCarNeighbors) {
 			road.display('road');
 		}
@@ -299,14 +270,12 @@ function editCell(cell, value, save = true) {
 				const leastNeighbors = (nAFillPercent > nBFillPercent) ? acc : val;
 				const mostNeighbors = (nAFillPercent > nBFillPercent) ? val : acc;
 				const notConnected = (leastNeighbors.displayConnection) ? mostNeighbors : leastNeighbors;
-				// console.log(filledNeighborsA, filledNeighborsB, nAFillPercent, nBFillPercent, leastNeighbors, mostNeighbors, notConnected);
 				return notConnected;
 			});
 		}
 		for (const road of emptyCarNeighbors) {
 			road.display(null);
 		}
-		// console.log("chargerA", charger);
 
 		if (charger && !charger.displayConnection) {
 			game.linkCarToCharger(cell, charger);
@@ -349,9 +318,6 @@ function editCell(cell, value, save = true) {
 			game.linkCarToCharger(car, charger);
 		}
 	}
-
-	countColor.value[`row-${cell.row}`] = getCountColor(cell.row, 'row');
-	countColor.value[`col-${cell.col}`] = getCountColor(cell.col, 'col');
 
 	if (save) {
 		db.currentGame.put({
@@ -447,6 +413,9 @@ function cellClicked(cell) {
 		editCell(cell, mode.value);
 	}
 }
+
+const visibleChargerCount = computed(() => game.getFlatCells().filter(c => c.displayValue === 'charge').length);
+const loading = computed(() => game.rows === 0 || game.cols === 0 || visibleChargerCount.value === 0 || !doneLoading.value);
 </script>
 
 <style scoped>
@@ -534,6 +503,11 @@ h1 {
 	height: 100%;
 }
 
+.emoji {
+	font-size: calc((20vh + 20vw) / (max(v-bind('game.rows'), v-bind('game.cols')) * 2));
+	line-height: 1;
+}
+
 .game-board-cells {
 	min-width: calc(v-bind('game.cols') * 1rem);
 }
@@ -586,20 +560,7 @@ h1 {
 	transition: background 0s linear;
 }
 
-.game-cell :deep(.emoji) {
-	font-size: calc((20vh + 20vw) / (v-bind('game.rows') + v-bind('game.cols')));
-	line-height: 1;
-}
 
-:deep(.up) {
-	font-size: calc((13vh + 13vw) / (v-bind('game.rows') + v-bind('game.cols')));
-}
-
-:deep(.down),
-:deep(.left),
-:deep(.right) {
-	font-size: calc((10vh + 10vw) / (v-bind('game.rows') + v-bind('game.cols')));
-}
 
 .game-cell:not(.visible):hover,
 .game-cell:not(.visible).hover {

@@ -26,10 +26,26 @@
 </template>
 
 <script setup>
-const props = defineProps(['type', 'cell']);
+const props = defineProps(['type', 'cell', 'rows', 'cols']);
 
 const hue = (props.type === 'car') ? props.cell.randomHue : 100;
 const saturate = (props.type === 'car') ? props.cell.randomSaturate : 2.5;
 const icon = (props.type === 'car') ? props.cell.carIcon : '⛽';
 const connection = (props.type === 'car') ? props.cell.displayConnectedCharger?.displayValue : props.cell.displayConnectedCar?.displayValue;
 </script>
+
+<style scoped>
+span {
+	white-space: nowrap;
+}
+
+.up {
+	font-size: calc((13vh + 13vw) / (max(v-bind('rows'), v-bind('cols')) * 2));
+}
+
+.down,
+.left,
+.right {
+	font-size: calc((10vh + 10vw) / (max(v-bind('rows'), v-bind('cols')) * 2));
+}
+</style>

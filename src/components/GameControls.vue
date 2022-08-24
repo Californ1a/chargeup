@@ -2,10 +2,10 @@
 	<div class="controls">
 		<div class="left-control-group">
 			<label for="rows" class="rows">Rows:</label>
-			<input type="range" min="4" max="20" :value="rowValue" @input="updateRows" class="rows" name="rows" />
+			<input type="range" min="4" max="17" :value="rowValue" @input="updateRows" class="rows" name="rows" />
 			<span class="rows">{{ rowValue }}</span>
 			<label for="cols" class="cols">Columns:</label>
-			<input type="range" min="4" max="20" :value="colValue" @input="updateCols" class="cols" name="cols" />
+			<input type="range" min="4" max="23" :value="colValue" @input="updateCols" class="cols" name="cols" />
 			<span class="cols">{{ colValue }}</span>
 			<button class="new-game" @click="$emit('newGame', $event, rowValue, colValue)">New Game</button>
 		</div>

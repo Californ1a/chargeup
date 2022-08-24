@@ -22,11 +22,7 @@ export class Cell {
 
 	display(value) {
 		this.displayValue = value;
-		if (value === this.value) {
-			this.correct = true;
-		} else {
-			this.correct = false;
-		}
+		this.correct = (value === this.value);
 	}
 	setConnectedCar(cell) {
 		this.connectedCar = cell;

@@ -4,7 +4,7 @@
 			@mouseenter="(e) => toggleHoverClass(e, type, i)"
 			@mouseleave="(e) => toggleHoverClass(e, type, i)"
 			@click="(e) => displayAll(e, type, i)">
-			<span class="count" :style="`color: ${color[`${type}-${i}`]}`">
+			<span class="count" :style="`color: ${getCountColor(i, type)}`">
 				{{ carsInRowCol(i, type, 'value') }}
 			</span>
 		</div>
@@ -69,6 +69,16 @@ function displayAll(e, type, i) {
 function carsInRowCol(row, rowCol, type) {
 	const cells = (rowCol === 'row') ? props.game.getRow(row) : props.game.getCol(row);
 	return cells.filter(cell => cell[type] === "car").length;
+}
+
+function getCountColor(i, type) {
+	const getFunc = "get" + type.charAt(0).toUpperCase() + type.slice(1);
+	const cars = props.game[getFunc](i).filter(c => c.value === 'car');
+	const displayedCars = props.game[getFunc](i).filter(c => c.displayValue === 'car');
+	if (displayedCars.length === cars.length) {
+		return 'green';
+	}
+	return 'white';
 }
 </script>
 
