@@ -85,6 +85,11 @@ function updateCols(e) {
 	margin-right: 1rem;
 }
 
+.left-control-group span {
+	min-width: 18px;
+	text-align: right;
+}
+
 .left-control-group button.new-game {
 	grid-area: new-game;
 

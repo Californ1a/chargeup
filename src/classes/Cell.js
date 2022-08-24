@@ -7,7 +7,6 @@ export class Cell {
 		this.col = col;
 		this.value = value; // 🚗 ⛽
 		this.correct = false;
-		this.element = null;
 		this.hover = false;
 		this.displayValue = null;
 		this.carIcon = carIcons[Math.floor(Math.random() * carIcons.length)];

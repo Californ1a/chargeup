@@ -15,9 +15,9 @@ export class Board {
 				}
 			}
 		} else {
-			this.rows = rows;
-			this.cols = cols;
-			if (this.rows > 1 || this.cols > 1) {
+			this.rows = +rows;
+			this.cols = +cols;
+			if (this.rows > 1 && this.cols > 1) {
 				this.generateBoard();
 			}
 		}
@@ -41,7 +41,8 @@ export class Board {
 		return this.endTime;
 	}
 	getTime() {
-		return (this.endTime) ? this.endTime - this.startTime + this.previousDuration : performance.now() - this.startTime + this.previousDuration;
+		return (this.endTime) ? this.endTime - this.startTime + this.previousDuration
+			: (this.startTime) ? performance.now() - this.startTime + this.previousDuration : 0;
 	}
 	getCell(row, col) {
 		return this.cells[row][col];
@@ -137,6 +138,7 @@ export class Board {
 				const chargerCell = this.setCell(charger.row, charger.col, 'charge');
 				carCell.setConnectedCharger(chargerCell);
 				chargerCell.setConnectedCar(carCell);
+				chargerCell.display('charge');
 				const emptyCarNeighbors = this.getCellNeighborsWithDiagonal(carCell).filter(c => c.value === null);
 				for (const cell of emptyCarNeighbors) {
 					this.setCell(cell.row, cell.col, 'road');
@@ -147,7 +149,7 @@ export class Board {
 			remainingCells = this.getFlatCells().filter(cell => cell.value === null);
 			potentialCars = remainingCells.filter(c => this.getCellNeighborsWithDiagonal(c).filter(n => n.value === 'car').length === 0);
 		}
-		console.log(this.getAs('value'));
+		console.log("boardAsValue", this.getAs('value'));
 		// Set remaining cells to be road
 		const newRemainingCells = this.getFlatCells().filter(cell => cell.value === null);
 		for (const cell of newRemainingCells) {
