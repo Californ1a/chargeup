@@ -1,6 +1,8 @@
 <template>
 	<div :class="`${type}-count-cells`">
-		<div v-for="(rowCol, i) in rowColCount" :key="rowCol" :class="`${type}-count`"
+		<div v-for="(rowCol, i) in rowColCount"
+			:key="rowCol"
+			:class="`${type}-count`"
 			@mouseenter="(e) => toggleHoverClass(e, type, i)"
 			@mouseleave="(e) => toggleHoverClass(e, type, i)"
 			@click="(e) => displayAll(e, type, i)">
@@ -12,7 +14,25 @@
 </template>
 
 <script setup>
-const props = defineProps(['game', 'type', 'color', 'mode', 'editCell']);
+import { Board } from '@/classes/Board';
+const props = defineProps({
+	game: Board,
+	type: {
+		type: String,
+		default: 'row',
+		required: true,
+	},
+	mode: {
+		type: String,
+		default: 'road',
+		required: true,
+	},
+	editCell: {
+		type: Function,
+		default: () => {},
+		required: true,
+	},
+});
 
 const rowColCount = (props.type === 'row') ? props.game.cells : props.game.cells[0];
 

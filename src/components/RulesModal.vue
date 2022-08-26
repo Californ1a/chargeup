@@ -1,13 +1,16 @@
 <template>
 	<div ref="modalElement" class="modal">
 		<div class="modal-content">
-			<button class="closebutton" @click="close">&times;</button>
+			<button class="closebutton" @click="close">
+				&times;
+			</button>
 			<div class="modal-content-inner">
 				<h3>Rules</h3>
 				<ul>
 					<li>Each charger can only be connected to one car.</li>
 					<li>Each car must not touch any other car, including diagonally.</li>
-					<li>The numbers given in the rows and columns describe how many cars are in that line.
+					<li>
+						The numbers given in the rows and columns describe how many cars are in that line.
 						<ul>
 							<li>The number turns green when the correct number of cars are placed in the line. This does not mean they are in the correct place, just that the count is correct.</li>
 						</ul>
@@ -17,7 +20,8 @@
 				<ul>
 					<li>Choose which type of tile to place with the mode buttons at the bottom.</li>
 					<li>Click an individual cell or click & drag to place the selected type.</li>
-					<li>Click on a row or column to fill the entire line with your selected type.
+					<li>
+						Click on a row or column to fill the entire line with your selected type.
 						<ul>
 							<li>This will not affect cars connected to chargers so road can be easily filled once a line is complete.</li>
 						</ul>
@@ -30,7 +34,18 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
-const props = defineProps(['close', 'display']);
+const props = defineProps({
+	close: {
+		type: Function,
+		default: () => {},
+		required: true,
+	},
+	display: {
+		type: String,
+		default: 'none',
+		required: true,
+	}
+});
 const modalElement = ref(null);
 
 onMounted(() => {

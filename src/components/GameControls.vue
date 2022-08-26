@@ -2,17 +2,35 @@
 	<div class="controls">
 		<div class="left-control-group">
 			<label for="rows" class="rows">Rows:</label>
-			<input type="range" min="4" max="17" :value="rowValue" @input="updateRows" class="rows" name="rows" />
+			<input type="range"
+				min="4"
+				max="17"
+				:value="rowValue"
+				@input="updateRows"
+				class="rows"
+				name="rows">
 			<span class="rows">{{ rowValue }}</span>
 			<label for="cols" class="cols">Columns:</label>
-			<input type="range" min="4" max="23" :value="colValue" @input="updateCols" class="cols" name="cols" />
+			<input type="range"
+				min="4"
+				max="23"
+				:value="colValue"
+				@input="updateCols"
+				class="cols"
+				name="cols">
 			<span class="cols">{{ colValue }}</span>
-			<button class="new-game" @click="$emit('newGame', $event, rowValue, colValue)">New Game</button>
+			<button class="new-game" @click="$emit('newGame', $event, rowValue, colValue)">
+				New Game
+			</button>
 		</div>
 		<div class="main-control-group">
 			<label for="mode">Mode</label>
-			<ControlButton :mode="mode" btnType="car" @update:modelValue="$emit('update:modelValue', $event.target.value)" />
-			<ControlButton :mode="mode" btnType="road" @update:modelValue="$emit('update:modelValue', $event.target.value)" />
+			<ControlButton btn-type="car"
+				:mode="mode"
+				@update:model-value="$emit('update:modelValue', $event.target.value)" />
+			<ControlButton btn-type="road"
+				:mode="mode"
+				@update:model-value="$emit('update:modelValue', $event.target.value)" />
 		</div>
 		<div class="right-control-group">
 			<!-- <button class="btn btn-primary" @click="$emit('start')">Start</button>
@@ -23,8 +41,20 @@
 
 <script setup>
 import { ref } from 'vue';
+import { Board } from '@/classes/Board';
 import ControlButton from './ControlButton.vue';
-const props = defineProps(['mode', 'game', 'persist']);
+defineEmits(['newGame', 'update:modelValue']);
+const props = defineProps({
+	mode: {
+		type: String,
+		default: 'road',
+		required: true,
+	},
+	game: {
+		type: Board,
+		required: true,
+	},
+});
 
 const rowValue = ref(+props.game.rows);
 const colValue = ref(+props.game.cols);

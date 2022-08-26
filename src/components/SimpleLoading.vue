@@ -2,12 +2,14 @@
 	<div class="loader">
 		<div class="lds-ring">
 			<!-- https://loading.io/css/ -->
-			<div></div>
-			<div></div>
-			<div></div>
-			<div></div>
+			<div />
+			<div />
+			<div />
+			<div />
 		</div>
-		<p class="generating">{{ loadingText }}</p>
+		<p class="generating">
+			{{ loadingText }}
+		</p>
 	</div>
 </template>
 

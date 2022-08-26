@@ -3,42 +3,72 @@
 		<div class="header">
 			<h1>Charge Up</h1>
 			<div class="topbuttons">
-				<button @click="openRulesModal">Rules</button>
-				<button @click="getHint">Hint</button>
+				<button @click="openRulesModal">
+					Rules
+				</button>
+				<button @click="getHint">
+					Hint
+				</button>
 			</div>
 		</div>
 		<SimpleLoading v-if="loading" />
-		<div :class="{
-			hidden: loading,
-		}" :key="game.id">
+		<div :key="game.id"
+			:class="{
+				hidden: loading,
+			}">
 			<div class="game-board-cells">
-				<div ref="cellElements" v-for="cell in game.getFlatCells()" :data-row="cell.row" :data-col="cell.col" :key="cell.id" class="game-cell"
+				<div v-for="cell in game.getFlatCells()"
+					:data-row="cell.row"
+					:data-col="cell.col"
+					:key="cell.id"
+					class="game-cell"
 					@mousedown="cellClicked(cell)"
 					@mousemove="clicking($event, cell)"
 					:class="{
-          visible: cell.displayValue,
-          charge: cell.value === 'charge',
-          hover: cell.hover,
-					hint: cell.hint,
-        }">
+						visible: cell.displayValue,
+						charge: cell.value === 'charge',
+						hover: cell.hover,
+						hint: cell.hint,
+					}">
 					<span v-if="cell.displayValue === 'charge'" class="emoji">
-						<EmojiCell :cell="cell" :rows="game.rows" :cols="game.cols" type="charge" :key="cell.displayConnectedCar" />
+						<EmojiCell type="charge"
+							:cell="cell"
+							:rows="game.rows"
+							:cols="game.cols"
+							:key="cell.displayConnectedCar" />
 					</span>
 					<span v-else-if="cell.displayValue === 'car'" class="emoji">
-						<EmojiCell :cell="cell" :rows="game.rows" :cols="game.cols" type="car" />
+						<EmojiCell type="car"
+							:cell="cell"
+							:rows="game.rows"
+							:cols="game.cols" />
 					</span>
 					<span v-else-if="cell.displayValue" class="emoji">&nbsp;</span>
 					<span v-else>&nbsp;</span>
 				</div>
 			</div>
 		</div>
-		<CarCounts :class="{
-			hidden: loading,
-		}" :key="game.id" :game="game" type="row" :color="countColor" :mode="mode" :editCell="editCell" />
-		<CarCounts :class="{
-			hidden: loading,
-		}" :key="game.id" :game="game" type="col" :color="countColor" :mode="mode" :editCell="editCell" />
-		<GameControls :key="game.id" :mode="mode" :game="game" @update:modelValue="updateMode" @new-game="newGameBtn" :persist="persist" />
+		<CarCounts type="row"
+			:key="game.id"
+			:game="game"
+			:mode="mode"
+			:edit-cell="editCell"
+			:class="{
+				hidden: loading,
+			}" />
+		<CarCounts type="col"
+			:key="game.id"
+			:game="game"
+			:mode="mode"
+			:edit-cell="editCell"
+			:class="{
+				hidden: loading,
+			}" />
+		<GameControls :key="game.id"
+			:mode="mode"
+			:game="game"
+			@update:model-value="updateMode"
+			@new-game="newGameBtn" />
 	</div>
 	<RulesModal :display="rulesModalDisplay" :close="closeRulesModal" />
 </template>
@@ -63,7 +93,6 @@ const mode = ref(null);
 const doneLoading = ref(false);
 const toast = useToast();
 const persist = ref(null);
-const countColor = ref({});
 const rulesModalDisplay = ref('none');
 let lastDraggedCellVal = null;
 let markMode = true;

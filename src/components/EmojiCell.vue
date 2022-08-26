@@ -1,21 +1,17 @@
 <template>
-	<span
-		v-if="connection && cell.displayConnection === 'up'"
+	<span v-if="connection && cell.displayConnection === 'up'"
 		:style="`filter: hue-rotate(${hue}deg) saturate(${saturate})`">
-		<span class="up">^<br /></span>{{ icon }}
+		<span class="up">^<br></span>{{ icon }}
 	</span>
-	<span
-		v-else-if="connection && cell.displayConnection === 'down'"
+	<span v-else-if="connection && cell.displayConnection === 'down'"
 		:style="`filter: hue-rotate(${hue}deg) saturate(${saturate})`">
-		{{ icon }}<span class="down"><br />v</span>
+		{{ icon }}<span class="down"><br>v</span>
 	</span>
-	<span
-		v-else-if="connection && cell.displayConnection === 'left'"
+	<span v-else-if="connection && cell.displayConnection === 'left'"
 		:style="`filter: hue-rotate(${hue}deg) saturate(${saturate})`">
 		<span class="left">&lt;</span>{{ icon }}
 	</span>
-	<span
-		v-else-if="connection && cell.displayConnection === 'right'"
+	<span v-else-if="connection && cell.displayConnection === 'right'"
 		:style="`filter: hue-rotate(${hue}deg) saturate(${saturate})`">
 		{{ icon }}<span class="right">&gt;</span>
 	</span>
@@ -26,12 +22,36 @@
 </template>
 
 <script setup>
-const props = defineProps(['type', 'cell', 'rows', 'cols']);
+import { computed } from 'vue';
+import { Cell } from '@/classes/Cell';
+const props = defineProps({
+	type: {
+		type: String,
+		default: 'road',
+		required: true,
+	},
+	cell: {
+		type: Cell,
+		required: true,
+	},
+	rows: {
+		type: Number,
+		default: 0,
+		required: true,
+	},
+	cols: {
+		type: Number,
+		default: 0,
+		required: true,
+	},
+});
 
 const hue = (props.type === 'car') ? props.cell.randomHue : 100;
 const saturate = (props.type === 'car') ? props.cell.randomSaturate : 2.5;
 const icon = (props.type === 'car') ? props.cell.carIcon : '⛽';
-const connection = (props.type === 'car') ? props.cell.displayConnectedCharger?.displayValue : props.cell.displayConnectedCar?.displayValue;
+const connection = computed(() => {
+	return (props.type === 'car') ? props.cell.displayConnectedCharger?.displayValue : props.cell.displayConnectedCar?.displayValue;
+});
 </script>
 
 <style scoped>
