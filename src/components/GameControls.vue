@@ -6,18 +6,18 @@
 				min="4"
 				max="17"
 				:value="rowValue"
-				@input="updateRows"
 				class="rows"
-				name="rows">
+				name="rows"
+				@input="updateRows">
 			<span class="rows">{{ rowValue }}</span>
 			<label for="cols" class="cols">Columns:</label>
 			<input type="range"
 				min="4"
 				max="23"
 				:value="colValue"
-				@input="updateCols"
 				class="cols"
-				name="cols">
+				name="cols"
+				@input="updateCols">
 			<span class="cols">{{ colValue }}</span>
 			<button class="new-game" @click="$emit('newGame', $event, rowValue, colValue)">
 				New Game

@@ -18,24 +18,24 @@
 			}">
 			<div class="game-board-cells">
 				<div v-for="cell in game.getFlatCells()"
+					:key="cell.id"
 					:data-row="cell.row"
 					:data-col="cell.col"
-					:key="cell.id"
 					class="game-cell"
-					@mousedown="cellClicked(cell)"
-					@mousemove="clicking($event, cell)"
 					:class="{
 						visible: cell.displayValue,
 						charge: cell.value === 'charge',
 						hover: cell.hover,
 						hint: cell.hint,
-					}">
+					}"
+					@mousedown="cellClicked(cell)"
+					@mousemove="clicking($event, cell)">
 					<span v-if="cell.displayValue === 'charge'" class="emoji">
-						<EmojiCell type="charge"
+						<EmojiCell :key="cell.displayConnectedCar"
+							type="charge"
 							:cell="cell"
 							:rows="game.rows"
-							:cols="game.cols"
-							:key="cell.displayConnectedCar" />
+							:cols="game.cols" />
 					</span>
 					<span v-else-if="cell.displayValue === 'car'" class="emoji">
 						<EmojiCell type="car"
@@ -48,16 +48,16 @@
 				</div>
 			</div>
 		</div>
-		<CarCounts type="row"
-			:key="game.id"
+		<CarCounts :key="game.id"
+			type="row"
 			:game="game"
 			:mode="mode"
 			:edit-cell="editCell"
 			:class="{
 				hidden: loading,
 			}" />
-		<CarCounts type="col"
-			:key="game.id"
+		<CarCounts :key="game.id"
+			type="col"
 			:game="game"
 			:mode="mode"
 			:edit-cell="editCell"

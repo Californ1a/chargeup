@@ -2,7 +2,7 @@
 module.exports = {
 	"root": true,
 	"extends": [
-		"plugin:vue/vue3-strongly-recommended",
+		"plugin:vue/vue3-recommended",
 		"eslint:recommended"
 	],
 	"parserOptions": {

@@ -15,8 +15,7 @@
 		:style="`filter: hue-rotate(${hue}deg) saturate(${saturate})`">
 		{{ icon }}<span class="right">&gt;</span>
 	</span>
-	<span v-else
-		:style="`${(type==='car') ? `filter: hue-rotate(${hue}deg) saturate(${saturate})` : ''}`">
+	<span v-else :style="style">
 		{{ icon }}
 	</span>
 </template>
@@ -52,6 +51,7 @@ const icon = (props.type === 'car') ? props.cell.carIcon : '⛽';
 const connection = computed(() => {
 	return (props.type === 'car') ? props.cell.displayConnectedCharger?.displayValue : props.cell.displayConnectedCar?.displayValue;
 });
+const style = computed(() => (props.type === 'car') ? `filter: hue-rotate(${hue}deg) saturate(${saturate})` : '');
 </script>
 
 <style scoped>

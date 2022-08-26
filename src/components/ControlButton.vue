@@ -1,7 +1,7 @@
 <template>
 	<div class="control">
-		<input type="radio"
-			:id="btnType"
+		<input :id="btnType"
+			type="radio"
 			:value="btnType"
 			@click="$emit('update:modelValue', $event)">
 		<label :for="btnType" :class="{selected:mode===btnType}">{{ capsFirst(btnType) }}</label>
