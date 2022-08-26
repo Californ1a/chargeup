@@ -13,7 +13,7 @@ const nodes = new Map();
 
 function createNodes(acc, n) {
 	if (!nodes.has(n.id)) {
-		const node = new Node(n)
+		const node = new Node(n);
 		acc.push(node);
 	}
 	return acc;
@@ -42,7 +42,7 @@ export default function bfs(game, startCell) {
 		} else if (cell.displayValue === 'car') {
 			neighbors = game.getCellNeighbors(cell).filter(n => n.displayValue === 'charge').reduce(createNodes, []);
 		}
-		for (let i = 0; i < neighbors.length; i++) {
+		for (let i = 0; i < neighbors.length; i += 1) {
 			const neighbor = neighbors[i];
 			if (neighbor.searched) continue;
 			neighbor.parent = current;
@@ -52,7 +52,7 @@ export default function bfs(game, startCell) {
 		}
 	}
 	nodes.clear();
-	console.log("end", end);
+	console.log('end', end);
 	if (!end) return null;
 
 	const path = [];

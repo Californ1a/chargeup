@@ -2,9 +2,12 @@
 	<div class="container">
 		<div class="inner-container">
 			<h1>Hold up!</h1>
-			<p>Failed to persist board. User interaction required. Without persistence, the browser may automatically clear game saves.</p>
+			<p>
+				Failed to persist board. User interaction required. Without persistence,
+				the browser may automatically clear game saves.
+			</p>
 		</div>
-		<button class="action" @click.stop="clicked">
+		<button type="button" class="action" @click.stop="clicked">
 			Save
 		</button>
 	</div>

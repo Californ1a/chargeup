@@ -20,6 +20,10 @@ const loadingText = ref(null);
 let interval;
 let attempts = 0;
 
+function setLoadingText(text = 'Generating') {
+	loadingText.value = text;
+}
+
 function ellipsis() {
 	interval = setInterval(() => {
 		if (attempts > 3) {
@@ -28,12 +32,8 @@ function ellipsis() {
 		} else {
 			loadingText.value += '.';
 		}
-		attempts++;
+		attempts += 1;
 	}, 300);
-}
-
-function setLoadingText(text = "Generating") {
-	loadingText.value = text;
 }
 
 onMounted(() => {
@@ -42,7 +42,7 @@ onMounted(() => {
 });
 onUnmounted(() => {
 	clearInterval(interval);
-	console.log("Done loading")
+	console.log('Done loading');
 });
 </script>
 

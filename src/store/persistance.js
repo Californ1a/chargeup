@@ -7,30 +7,29 @@
       or if it was already persisted.
 		https://dexie.org/docs/StorageManager
 */
-export async function tryPersistWithoutPromtingUser() {
+export default async function tryPersistWithoutPromtingUser() {
 	if (!navigator.storage || !navigator.storage.persisted) {
-		return "never";
+		return 'never';
 	}
 	let persisted = await navigator.storage.persisted();
 	if (persisted) {
-		return "persisted";
+		return 'persisted';
 	}
 	if (!navigator.permissions || !navigator.permissions.query) {
-		return "prompt"; // It MAY be successful to prompt. Don't know.
+		return 'prompt'; // It MAY be successful to prompt. Don't know.
 	}
 	const permission = await navigator.permissions.query({
-		name: "persistent-storage"
+		name: 'persistent-storage',
 	});
-	if (permission.state === "granted") {
+	if (permission.state === 'granted') {
 		persisted = await navigator.storage.persist();
 		if (persisted) {
-			return "persisted";
-		} else {
-			throw new Error("Failed to persist");
+			return 'persisted';
 		}
+		throw new Error('Failed to persist');
 	}
-	if (permission.state === "prompt") {
-		return "prompt";
+	if (permission.state === 'prompt') {
+		return 'prompt';
 	}
-	return "never";
+	return 'never';
 }

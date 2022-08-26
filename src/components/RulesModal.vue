@@ -1,7 +1,7 @@
 <template>
 	<div ref="modalElement" class="modal">
 		<div class="modal-content">
-			<button class="closebutton" @click="close">
+			<button type="button" class="closebutton" @click="close">
 				&times;
 			</button>
 			<div class="modal-content-inner">
@@ -12,7 +12,10 @@
 					<li>
 						The numbers given in the rows and columns describe how many cars are in that line.
 						<ul>
-							<li>The number turns green when the correct number of cars are placed in the line. This does not mean they are in the correct place, just that the count is correct.</li>
+							<li>
+								The number turns green when the correct number of cars are placed in the line.
+								This does not mean they are in the correct place, just that the count is correct.
+							</li>
 						</ul>
 					</li>
 				</ul>
@@ -23,7 +26,10 @@
 					<li>
 						Click on a row or column to fill the entire line with your selected type.
 						<ul>
-							<li>This will not affect cars connected to chargers so road can be easily filled once a line is complete.</li>
+							<li>
+								This will not affect cars connected to chargers so road can be easily filled
+								once a line is complete.
+							</li>
 						</ul>
 					</li>
 				</ul>
@@ -34,6 +40,7 @@
 
 <script setup>
 import { onMounted, ref } from 'vue';
+
 const props = defineProps({
 	close: {
 		type: Function,
@@ -44,12 +51,12 @@ const props = defineProps({
 		type: String,
 		default: 'none',
 		required: true,
-	}
+	},
 });
 const modalElement = ref(null);
 
 onMounted(() => {
-	window.addEventListener("click", (event) => {
+	window.addEventListener('click', (event) => {
 		if (event.target === modalElement.value) {
 			props.close();
 		}

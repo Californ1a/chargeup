@@ -1,6 +1,6 @@
-const carIcons = ["🚗", "🚙"];
+const carIcons = ['🚗', '🚙'];
 
-export class Cell {
+export default class Cell {
 	constructor(row, col, value) {
 		this.id = `${row}-${col}`;
 		this.row = row;
@@ -24,9 +24,11 @@ export class Cell {
 		this.displayValue = value;
 		this.correct = (value === this.value);
 	}
+
 	setConnectedCar(cell) {
 		this.connectedCar = cell;
 	}
+
 	setConnectedCharger(cell) {
 		this.connectedCharger = cell;
 	}
@@ -41,8 +43,18 @@ export class Cell {
 	getConnectionDirection(cell) {
 		const colOffset = cell.col - this.col;
 		const rowOffset = cell.row - this.row;
-		return (colOffset === 0) ? (rowOffset > 0 ? "down" : "up") : (colOffset > 0 ? "right" : "left");
+		if (colOffset === 0) {
+			if (rowOffset > 0) {
+				return 'down';
+			}
+			return 'up';
+		}
+		if (colOffset > 0) {
+			return 'right';
+		}
+		return 'left';
 	}
+
 	clearDisplayConnections() {
 		this.displayConnectedCharger = null;
 		this.displayConnectedCar = null;

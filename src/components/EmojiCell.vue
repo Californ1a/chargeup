@@ -22,7 +22,8 @@
 
 <script setup>
 import { computed } from 'vue';
-import { Cell } from '@/classes/Cell';
+import Cell from '@/classes/Cell';
+
 const props = defineProps({
 	type: {
 		type: String,
@@ -48,10 +49,8 @@ const props = defineProps({
 const hue = (props.type === 'car') ? props.cell.randomHue : 100;
 const saturate = (props.type === 'car') ? props.cell.randomSaturate : 2.5;
 const icon = (props.type === 'car') ? props.cell.carIcon : '⛽';
-const connection = computed(() => {
-	return (props.type === 'car') ? props.cell.displayConnectedCharger?.displayValue : props.cell.displayConnectedCar?.displayValue;
-});
-const style = computed(() => (props.type === 'car') ? `filter: hue-rotate(${hue}deg) saturate(${saturate})` : '');
+const connection = computed(() => ((props.type === 'car') ? props.cell.displayConnectedCharger?.displayValue : props.cell.displayConnectedCar?.displayValue));
+const style = computed(() => ((props.type === 'car') ? `filter: hue-rotate(${hue}deg) saturate(${saturate})` : ''));
 </script>
 
 <style scoped>

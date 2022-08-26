@@ -19,7 +19,7 @@
 				name="cols"
 				@input="updateCols">
 			<span class="cols">{{ colValue }}</span>
-			<button class="new-game" @click="$emit('newGame', $event, rowValue, colValue)">
+			<button type="button" class="new-game" @click="$emit('newGame', $event, rowValue, colValue)">
 				New Game
 			</button>
 		</div>
@@ -41,8 +41,9 @@
 
 <script setup>
 import { ref } from 'vue';
-import { Board } from '@/classes/Board';
+import Board from '@/classes/Board';
 import ControlButton from './ControlButton.vue';
+
 defineEmits(['newGame', 'update:modelValue']);
 const props = defineProps({
 	mode: {
@@ -178,35 +179,6 @@ function updateCols(e) {
 	grid-area: control2;
 }
 
-.main-control-group :deep(.control) {
-	color: #fff;
-	text-align: center;
-	font-size: 1rem;
-}
-
-.main-control-group :deep(input[type="radio"]) {
-	display: none;
-}
-
-.main-control-group :deep(.control label) {
-	display: block;
-	cursor: pointer;
-	background: #111;
-	color: #fff;
-	padding: 3px;
-	border-radius: 5px;
-	border: 1px solid #fff;
-	transition: all 0.2s ease-in-out;
-}
-
-.main-control-group :deep(.control label:hover) {
-	background: #333;
-}
-
-.main-control-group :deep(.control label.selected) {
-	background: #444;
-}
-
 .new-game {
 	font-size: 0.9rem;
 	color: orange;
@@ -231,7 +203,28 @@ function updateCols(e) {
 }
 
 .new-game:focus {
-	outline: none;
+	outline-color: Highlight;
+	outline-color: -webkit-focus-ring-color;
+	outline-style: auto;
+	outline-width: 1px;
+	z-index: 2;
+}
+
+@supports selector(:focus-visible) {
+
+	.new-game:focus {
+		outline: none;
+		z-index: 0;
+	}
+
+}
+
+.new-game:focus-visible {
+	outline-color: Highlight;
+	outline-color: -webkit-focus-ring-color;
+	outline-style: auto;
+	outline-width: 1px;
+	z-index: 2;
 }
 
 input[type="range"] {
