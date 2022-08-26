@@ -89,7 +89,7 @@ import bfs from './util/bfs';
 // import basicBoard from './assets/basicBoard';
 
 const game = reactive(new Board());
-const mode = ref(null);
+const mode = ref('road');
 const doneLoading = ref(false);
 const toast = useToast();
 const persist = ref(null);
