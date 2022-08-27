@@ -191,4 +191,35 @@ function getCountColor(i, type) {
 .col-count {
 	padding: 0.1vh 0;
 }
+
+.row-count:focus,
+.col-count:focus {
+	outline-color: Highlight;
+	outline-color: -webkit-focus-ring-color;
+	outline-style: auto;
+	outline-width: 1px;
+	z-index: 2;
+	background: #333;
+}
+
+@supports selector(:focus-visible) {
+
+	.row-count:focus,
+	.col-count:focus {
+		outline: none;
+		z-index: 0;
+		background: initial;
+	}
+
+}
+
+.row-count:focus-visible,
+.col-count:focus-visible {
+	outline-color: Highlight;
+	outline-color: -webkit-focus-ring-color;
+	outline-style: auto;
+	outline-width: 3px;
+	z-index: 2;
+	background: #333;
+}
 </style>

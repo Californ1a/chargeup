@@ -158,12 +158,31 @@ function updateMode(newMode) {
 	mode.value = newMode;
 }
 
+async function newGameBtn(e, rowCount, colCount) {
+	const placedCells = game.getFlatCells().filter(c => c.displayValue !== null && c.displayValue !== 'charge');
+	if (game.startTime && !game.endTime && placedCells.length > 0) {
+		// eslint-disable-next-line no-restricted-globals
+		const confirmation = confirm('Give up your current game and start a new one?');
+		if (!confirmation) return;
+	}
+	doneLoading.value = false;
+	mode.value = 'road';
+	await db.currentGame.clear();
+	Object.assign(game, new Board(rowCount, colCount));
+	doneLoading.value = true;
+}
+
 onMounted(async () => {
 	document.addEventListener('keydown', (e) => {
-		if (e.code === 'KeyS') {
+		if (e.code === 'KeyS' || e.code === 'Digit2') {
 			e.preventDefault();
+			document.querySelectorAll('*:focus,*:focus-visible').forEach(el => el.blur());
 			const newMode = (mode.value === 'road') ? 'car' : 'road';
 			updateMode(newMode);
+		} else if (e.code === 'Digit3') {
+			e.preventDefault();
+			document.querySelectorAll('*:focus,*:focus-visible').forEach(el => el.blur());
+			newGameBtn(null, game.rows, game.cols);
 		}
 	});
 
@@ -199,20 +218,6 @@ onMounted(async () => {
 	console.log('game', game);
 });
 
-async function newGameBtn(e, rowCount, colCount) {
-	const placedCells = game.getFlatCells().filter(c => c.displayValue !== null && c.displayValue !== 'charge');
-	if (game.startTime && !game.endTime && placedCells.length > 0) {
-		// eslint-disable-next-line no-restricted-globals
-		const confirmation = confirm('Give up your current game and start a new one?');
-		if (!confirmation) return;
-	}
-	doneLoading.value = false;
-	mode.value = 'road';
-	await db.currentGame.clear();
-	Object.assign(game, new Board(rowCount, colCount));
-	doneLoading.value = true;
-}
-
 function openRulesModal() {
 	rulesModalDisplay.value = 'flex';
 }
@@ -230,22 +235,16 @@ function editCell(cell, value, save = true) {
 		game.setStartTime();
 	}
 
-	console.log('cell', cell);
-	console.log('value', value);
-
 	const chargers = game.getCellNeighbors(cell).filter(c => c.value === 'charge');
-	console.log('chargers', chargers);
 	const unconnectedChargersWithAllNeighborsFilled = chargers.filter((c) => {
 		const hasConnection = c.displayConnection;
 		const neighbors = game.getCellNeighbors(c);
-		console.log('neighbors', neighbors);
 		const filledNeighbors = neighbors.filter(n => n.displayValue !== null);
 		const filledNeighborsPercent = filledNeighbors.length / neighbors.length;
 		const carNeighbors = neighbors.filter(n => n.displayValue === 'car');
 		const chargerConnectedCars = carNeighbors.filter((n) => {
 			if (!n.displayConnection) return false;
 			const chargerNeighbors = game.getCellNeighbors(n.displayConnectedCharger);
-			console.log('chargerNeighbors', chargerNeighbors);
 			const nullNeighbors = chargerNeighbors.filter(a => a.displayValue === null);
 			return nullNeighbors.length > 0;
 		});
