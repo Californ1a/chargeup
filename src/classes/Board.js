@@ -94,7 +94,7 @@ export default class Board {
 
 	checkBoard() {
 		const cells = this.getFlatCells();
-		const correctCells = cells.filter(cell => cell.correct || cell.value === 'charge');
+		const correctCells = cells.filter(cell => (cell.correct && !cell.colliding) || cell.value === 'charge');
 		const displayedCells = cells.filter(cell => cell.displayValue !== null);
 		if (cells.length === correctCells.length) return 'win';
 		if (cells.length === displayedCells.length) return 'wrong';
@@ -243,6 +243,7 @@ export default class Board {
 					carIcon: cell.carIcon,
 					randomHue: cell.randomHue,
 					randomSaturate: cell.randomSaturate,
+					colliding: cell.colliding,
 				};
 			}));
 		}
@@ -288,6 +289,7 @@ export default class Board {
 				cell.carIcon = cellState.carIcon;
 				cell.randomHue = cellState.randomHue;
 				cell.randomSaturate = cellState.randomSaturate;
+				cell.colliding = cellState.colliding;
 			}
 		}
 	}

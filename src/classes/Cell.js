@@ -18,6 +18,7 @@ export default class Cell {
 		this.hint = false;
 		this.randomHue = (Math.random() * 361).toFixed(2);
 		this.randomSaturate = Math.floor(Math.random() * (2.5 - 0.5 + 1)) + 0.5;
+		this.colliding = false;
 	}
 
 	display(value) {

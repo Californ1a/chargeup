@@ -81,7 +81,7 @@ function dealWithRowCol(rowOrCol, i, eType) {
 }
 
 function toggleHoverClass(e, type, i) {
-	const eType = Boolean(e.type.match(/^(mouseenter|focus)$/)); // .toggle() can get stuck on if hot reload while hovering
+	const eType = Boolean(e.type.match(/^(mouseenter|focus)$/));
 	dealWithRowCol(type, i, eType);
 }
 

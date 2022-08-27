@@ -27,6 +27,7 @@
 						charge: cell.value === 'charge',
 						hover: cell.hover,
 						hint: cell.hint,
+						colliding: cell.colliding,
 					}"
 					:tabindex="(cell.displayValue === 'charge') ? -1 : 0"
 					@mousedown="cellClicked($event, cell)"
@@ -233,6 +234,60 @@ function closeRulesModal() {
 	rulesModalDisplay.value = 'none';
 }
 
+function checkGameFinish() {
+	const check = game.checkBoard();
+	if (!check) return;
+	game.setEndTime();
+	const placedCells = game.getFlatCells().filter(c => c.value !== 'charge');
+	const cars = game.getFlatCells().filter(c => c.value === 'car');
+	setTimeout(async () => {
+		if (check === 'win') {
+			document.querySelectorAll('*:focus,*:focus-visible').forEach(el => el.blur());
+			const time = (game.getTime() / 1000).toFixed(3);
+			const hints = game.hints.length;
+			const hintStr = `Used ${hints} hint${(hints.length === 1) ? '' : 's'}.`;
+			const perCell = (time / placedCells.length).toFixed(3);
+			const perCar = (time / cars.length).toFixed(3);
+			const timeStr = `Took ${time} seconds (${perCell} per cell & ${perCar} per car).`;
+			alert(`You win! ${hintStr} ${timeStr}`);
+			try {
+				const entry = await db.games.add({
+					time,
+					timePerCell: perCell,
+					timePerCar: perCar,
+					hintCount: hints,
+					date: new Date(),
+					board: game.getAs('value'),
+					rows: game.rows,
+					cols: game.cols,
+					hints: game.getHintList(),
+				});
+				console.log(`Inserted new game to finished games with id ${entry}.`);
+				await db.currentGame.clear();
+				console.log('Deleted current game from db.');
+			} catch (e) {
+				console.error(`Error inserting new game to db: ${e}`);
+			}
+			if (showPersistToast) {
+				toast.error(persistToastContent, {
+					position: 'top-center',
+					timeout: false,
+					closeOnClick: false,
+					draggable: false,
+					showCloseButtonOnHover: false,
+					hideProgressBar: true,
+					closeButton: false,
+				});
+			}
+		} else if (check === 'wrong') {
+			game.endTime = null;
+			alert('Wrong!');
+		}
+		console.log(game.getAs('value'));
+		console.log(game.getAs('correct'));
+	}, 50);
+}
+
 function editCell(cell, value, save = true) {
 	if (game.endTime) return;
 	const oldValue = cell.displayValue;
@@ -259,10 +314,26 @@ function editCell(cell, value, save = true) {
 			&& carNeighbors.length > 0 && chargerConnectedCars.length > 0;
 	});
 
+	const cellsAroundCar = game.getCellNeighborsWithDiagonal(cell).filter(c => c.displayValue === 'car');
+	if (value === 'car' && cellsAroundCar.length > 0) {
+		cell.colliding = true;
+		for (const neighbor of cellsAroundCar) {
+			neighbor.colliding = true;
+		}
+	} else if (oldValue === 'car' && cellsAroundCar.length > 0) {
+		cell.colliding = false;
+		for (const neighbor of cellsAroundCar) {
+			const neighborCollisions = game.getCellNeighborsWithDiagonal(neighbor).filter(c => c.displayValue === 'car');
+			if (neighborCollisions.length === 0) {
+				neighbor.colliding = false;
+			}
+		}
+	}
+
 	if (value === 'car' && chargers.length > 0) {
 		// when placing a car next to a charger
-		const carNeighbors = game.getCellNeighborsWithDiagonal(cell);
-		const emptyCarNeighbors = carNeighbors.filter(c => c.displayValue === null);
+		const neighbors = game.getCellNeighborsWithDiagonal(cell);
+		const emptyCarNeighbors = neighbors.filter(c => c.displayValue === null);
 		emptyCarNeighbors.forEach(n => n.display('road'));
 
 		let charger = chargers[0];
@@ -329,57 +400,7 @@ function editCell(cell, value, save = true) {
 		game.save('put', mode.value);
 	}
 
-	const check = game.checkBoard();
-	if (!check) return;
-	game.setEndTime();
-	const placedCells = game.getFlatCells().filter(c => c.value !== 'charge');
-	const cars = game.getFlatCells().filter(c => c.value === 'car');
-	setTimeout(async () => {
-		if (check === 'win') {
-			document.querySelectorAll('*:focus,*:focus-visible').forEach(el => el.blur());
-			const time = (game.getTime() / 1000).toFixed(3);
-			const hints = game.hints.length;
-			const hintStr = `Used ${hints} hint${(hints.length === 1) ? '' : 's'}.`;
-			const perCell = (time / placedCells.length).toFixed(3);
-			const perCar = (time / cars.length).toFixed(3);
-			const timeStr = `Took ${time} seconds (${perCell} per cell & ${perCar} per car).`;
-			alert(`You win! ${hintStr} ${timeStr}`);
-			try {
-				const entry = await db.games.add({
-					time,
-					timePerCell: perCell,
-					timePerCar: perCar,
-					hintCount: hints,
-					date: new Date(),
-					board: game.getAs('value'),
-					rows: game.rows,
-					cols: game.cols,
-					hints: game.getHintList(),
-				});
-				console.log(`Inserted new game to finished games with id ${entry}.`);
-				await db.currentGame.clear();
-				console.log('Deleted current game from db.');
-			} catch (e) {
-				console.error(`Error inserting new game to db: ${e}`);
-			}
-			if (showPersistToast) {
-				toast.error(persistToastContent, {
-					position: 'top-center',
-					timeout: false,
-					closeOnClick: false,
-					draggable: false,
-					showCloseButtonOnHover: false,
-					hideProgressBar: true,
-					closeButton: false,
-				});
-			}
-		} else if (check === 'wrong') {
-			game.endTime = null;
-			alert('Wrong!');
-		}
-		console.log(game.getAs('value'));
-		console.log(game.getAs('correct'));
-	}, 50);
+	checkGameFinish();
 }
 
 function getHint() {
@@ -662,5 +683,15 @@ h1 {
 .row-count:hover,
 .col-count:hover {
 	background: #111;
+}
+
+.game-cell.visible.colliding {
+	background: maroon;
+}
+
+.game-cell.visible.colliding:hover,
+.game-cell.visible.colliding.hover,
+.game-cell.visible.colliding:focus-visible {
+	background: #900;
 }
 </style>
