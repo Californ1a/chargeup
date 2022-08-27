@@ -215,6 +215,13 @@ onMounted(async () => {
 			showPersistToast = true;
 			break;
 	}
+
+	setInterval(async () => {
+		if (game.startTime && !game.endTime) {
+			await game.save('update', mode.value);
+		}
+	}, 5000);
+
 	console.log('game', game);
 });
 
@@ -279,7 +286,6 @@ function editCell(cell, value, save = true) {
 			Board.linkCarToCharger(cell, charger);
 		} else if (charger.displayConnection) {
 			const path = bfs(game, cell);
-			console.log('path', path);
 			// console.log("seenIds", seenIds);
 			if (path && path.length > 0) {
 				for (let i = path.length - 1; i >= 0; i -= 2) {
@@ -320,15 +326,7 @@ function editCell(cell, value, save = true) {
 	}
 
 	if (save) {
-		db.currentGame.put({
-			id: game.id,
-			date: new Date(),
-			time: game.getTime(),
-			hints: game.getHintList(),
-			board: game.getAs('value'),
-			display: game.getAs('state'),
-			mode: mode.value,
-		});
+		game.save('put', mode.value);
 	}
 
 	const check = game.checkBoard();
@@ -345,7 +343,6 @@ function editCell(cell, value, save = true) {
 			const perCell = (time / placedCells.length).toFixed(3);
 			const perCar = (time / cars.length).toFixed(3);
 			const timeStr = `Took ${time} seconds (${perCell} per cell & ${perCar} per car).`;
-			alert(`You win! ${hintStr} ${timeStr}`);
 			try {
 				const entry = await db.games.add({
 					time,
@@ -364,6 +361,7 @@ function editCell(cell, value, save = true) {
 			} catch (e) {
 				console.error(`Error inserting new game to db: ${e}`);
 			}
+			alert(`You win! ${hintStr} ${timeStr}`);
 			if (showPersistToast) {
 				toast.error(persistToastContent, {
 					position: 'top-center',

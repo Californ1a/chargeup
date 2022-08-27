@@ -33,8 +33,7 @@
 				@update:model-value="$emit('update:modelValue', $event.target.value)" />
 		</div>
 		<div class="right-control-group">
-			<!-- <button class="btn btn-primary" @click="$emit('start')">Start</button>
-			<button class="btn btn-primary" @click="$emit('clear')">Clear</button> -->
+			<TheTimer :game="game" />
 		</div>
 	</div>
 </template>
@@ -43,6 +42,7 @@
 import { ref } from 'vue';
 import Board from '@/classes/Board';
 import ControlButton from './ControlButton.vue';
+import TheTimer from './TheTimer.vue';
 
 defineEmits(['newGame', 'update:modelValue']);
 const props = defineProps({

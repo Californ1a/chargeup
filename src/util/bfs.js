@@ -52,7 +52,6 @@ export default function bfs(game, startCell) {
 		}
 	}
 	nodes.clear();
-	console.log('end', end);
 	if (!end) return null;
 
 	const path = [];

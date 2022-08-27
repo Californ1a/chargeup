@@ -1,3 +1,4 @@
+import db from '@/store/db';
 import Cell from './Cell';
 
 export default class Board {
@@ -263,7 +264,6 @@ export default class Board {
 		if (board.length !== this.rows || board[0].length !== this.cols) {
 			throw new Error('Board size does not match');
 		}
-		console.log('board', board);
 		for (let i = 0; i < this.rows; i += 1) {
 			for (let j = 0; j < this.cols; j += 1) {
 				const cell = this.getCell(i, j);
@@ -290,6 +290,24 @@ export default class Board {
 				cell.randomSaturate = cellState.randomSaturate;
 			}
 		}
-		console.log('this.cells', this.cells);
+	}
+
+	async save(method, mode) {
+		if (method === 'put') {
+			await db.currentGame.put({
+				id: this.id,
+				date: new Date(),
+				time: this.getTime(),
+				hints: this.getHintList(),
+				board: this.getAs('value'),
+				display: this.getAs('state'),
+				mode,
+			});
+		} else if (method === 'update') {
+			await db.currentGame.update(this.id, {
+				date: new Date(),
+				time: this.getTime(),
+			});
+		}
 	}
 }
