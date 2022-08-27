@@ -146,6 +146,9 @@ function getCountColor(i, type) {
 	if (displayedCars.length === cars.length) {
 		return 'green';
 	}
+	if (displayedCars.length > cars.length) {
+		return 'red';
+	}
 	return 'white';
 }
 </script>

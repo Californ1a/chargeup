@@ -343,6 +343,7 @@ function editCell(cell, value, save = true) {
 			const perCell = (time / placedCells.length).toFixed(3);
 			const perCar = (time / cars.length).toFixed(3);
 			const timeStr = `Took ${time} seconds (${perCell} per cell & ${perCar} per car).`;
+			alert(`You win! ${hintStr} ${timeStr}`);
 			try {
 				const entry = await db.games.add({
 					time,
@@ -361,7 +362,6 @@ function editCell(cell, value, save = true) {
 			} catch (e) {
 				console.error(`Error inserting new game to db: ${e}`);
 			}
-			alert(`You win! ${hintStr} ${timeStr}`);
 			if (showPersistToast) {
 				toast.error(persistToastContent, {
 					position: 'top-center',
