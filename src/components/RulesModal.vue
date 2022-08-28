@@ -8,7 +8,14 @@
 				<h3>Rules</h3>
 				<ul>
 					<li>Each charger can only be connected to one car.</li>
-					<li>Each car must not touch any other car, including diagonally.</li>
+					<li>
+						Each car must not touch any other car, including diagonally.
+						<ul>
+							<li>
+								The cell will turn red if there is a collision.
+							</li>
+						</ul>
+					</li>
 					<li>
 						The numbers given in the rows and columns describe how many cars are in that line.
 						<ul>
@@ -16,10 +23,13 @@
 								The number turns green when the correct number of cars are placed in the line.
 								This does not mean they are in the correct place, just that the count is correct.
 							</li>
+							<li>
+								The number turns red if too many cars are in a line.
+							</li>
 						</ul>
 					</li>
 				</ul>
-				<h3>Controls</h3>
+				<h3>Mouse Controls</h3>
 				<ul>
 					<li>Choose which type of tile to place with the mode buttons at the bottom.</li>
 					<li>Click an individual cell or click & drag to place the selected type.</li>
@@ -32,6 +42,15 @@
 							</li>
 						</ul>
 					</li>
+				</ul>
+				<h3>Keyboard Controls</h3>
+				<ul>
+					<li>Use <strong>Tab</strong> or <strong>Arrow Keys</strong> to move around the board.</li>
+					<li>Hit <strong>Spacebar</strong> or <strong>Enter</strong> to place a tile.</li>
+					<li>
+						Hit <strong>S</strong> or <strong>2</strong> to swap between placing cars or road.
+					</li>
+					<li>Hit <strong>3</strong> to start a new game.</li>
 				</ul>
 			</div>
 		</div>
@@ -80,7 +99,7 @@ onMounted(() => {
 
 .modal-content {
 	background-color: rgb(23, 30, 36);
-	margin: 15vh 28vw 38vh 28vw;
+	margin: 15vh 28vw 34vh 28vw;
 	width: 100%;
 	overflow-y: overlay;
 	border: 3px solid #22394d;
@@ -90,7 +109,7 @@ onMounted(() => {
 .modal-content ul {
 	list-style-type: disc;
 	list-style-position: inside;
-	padding: 0 2rem;
+	padding: 0 1.5rem 0 2rem;
 	line-height: 2rem;
 	margin-bottom: 0.5rem;
 }
@@ -135,5 +154,32 @@ onMounted(() => {
 
 .closebutton:focus {
 	outline: 1px dotted #bbb;
+}
+
+::-webkit-scrollbar {
+	width: 0.4rem;
+}
+
+::-webkit-scrollbar:horizontal {
+	height: 0.5em;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+	-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+	-webkit-border-radius: 10px;
+	border-radius: 10px;
+	background: #333;
+}
+
+::-webkit-scrollbar-thumb:window-inactive {
+	background: #000;
 }
 </style>
