@@ -22,7 +22,7 @@ function convertMsToTimer(time) {
 	let minStr = (minutes < 10 && hours <= 0) ? `${minutes}`.slice(-2) : `0${minutes}`.slice(-2);
 	hrStr = hours > 0 ? `${hrStr}:` : '';
 	minStr = (minutes > 0 || hours > 0) ? `${minStr}:` : '';
-	let [secStr, msStr] = `0${seconds}`.split('.');
+	let [secStr, msStr] = `${seconds}`.split('.');
 	secStr = (seconds < 10 && minutes <= 0 && hours <= 0) ? `${secStr}`.slice(-2) : `0${secStr}`.slice(-2);
 	msStr = (msStr) ? msStr.slice(0, 2) : '00';
 
