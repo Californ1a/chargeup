@@ -17,8 +17,8 @@
 				</div>
 				<div class="times">
 					{{ parseFloat(time).toFixed(2) }} seconds<br />
-					<span class="d">- </span><span class="t2">({{ parseFloat(perCell).toFixed(2) }} per cell)</span><br />
-					<span class="d">- </span><span class="t3">({{ parseFloat(perCar).toFixed(2) }} per car)</span>
+					<span class="d">- </span><span class="t2">({{ perCell }} per cell)</span><br />
+					<span class="d">- </span><span class="t3">({{ perCar }} per car)</span>
 				</div>
 			</div>
 		</div>
@@ -26,7 +26,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
 import Board from '@/classes/Board';
 import db from '@/store/db';
 
@@ -44,14 +44,8 @@ const emit = defineEmits(['doneSaving']);
 const hints = ref(0);
 const time = ref(0);
 const saving = ref(true);
-const perCell = computed(() => {
-	const placedCells = props.game.getFlatCells().filter(c => c.value !== 'charge');
-	return (time.value / placedCells.length).toFixed(3);
-});
-const perCar = computed(() => {
-	const cars = props.game.getFlatCells().filter(c => c.value === 'car');
-	return (time.value / cars.length).toFixed(3);
-});
+const perCell = ref(0);
+const perCar = ref(0);
 
 async function saveGame() {
 	console.log('attempting to save game');
@@ -78,8 +72,11 @@ async function saveGame() {
 }
 
 async function getGameStats() {
-	time.value = (props.game.getTime() / 1000).toFixed(3);
+	time.value = (props.game.getTime() / 1000).toFixed(2);
 	hints.value = props.game.hints.length;
+	const cells = props.game.getFlatCells();
+	perCell.value = (time.value / cells.filter(c => c.value !== 'charge').length).toFixed(2);
+	perCar.value = (time.value / cells.filter(c => c.value === 'car').length).toFixed(2);
 	await saveGame(time, hints, perCell, perCar);
 }
 
