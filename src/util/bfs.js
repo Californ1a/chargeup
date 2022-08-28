@@ -19,7 +19,7 @@ function createNodes(acc, n) {
 	return acc;
 }
 
-export function bfs(game, startCell) {
+function bfs(game, startCell) {
 	const queue = [];
 	let end;
 
