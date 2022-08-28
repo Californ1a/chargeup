@@ -6,7 +6,7 @@
 Simple puzzle game about connecting cars to chargers without causing collisions.
 
 <p>
-	<img src="https://i.imgur.com/i4ct1H4.png"/>
+	<img src="https://i.imgur.com/73RIOQw.png"/>
 </p>
 
 </div>
