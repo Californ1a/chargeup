@@ -19,7 +19,7 @@ function createNodes(acc, n) {
 	return acc;
 }
 
-export default function bfs(game, startCell) {
+export function bfs(game, startCell) {
 	const queue = [];
 	let end;
 
@@ -63,3 +63,5 @@ export default function bfs(game, startCell) {
 	}
 	return path.map(node => node.cell);
 }
+
+export default bfs;
