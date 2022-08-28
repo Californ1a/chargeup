@@ -4,13 +4,23 @@
 			<h2>Saving...</h2>
 		</div>
 		<div v-else class="inner-container">
-			<h2>You Win!</h2>
-			<p>
-				Used {{ hints }} {{ hintPlural }}. <br />
-				Took {{ parseFloat(time).toFixed(2) }} seconds
-				({{ parseFloat(perCell).toFixed(2) }} per cell
-				& {{ parseFloat(perCar).toFixed(2) }} per car).
-			</p>
+			<h2>Correct!</h2>
+			<div>
+				<div class="hint-label">
+					Hints:
+				</div>
+				<div class="hints">
+					{{ hints }}
+				</div>
+				<div class="time-label">
+					Time:
+				</div>
+				<div class="times">
+					{{ parseFloat(time).toFixed(2) }} seconds<br />
+					<span class="d">- </span><span class="t2">({{ parseFloat(perCell).toFixed(2) }} per cell)</span><br />
+					<span class="d">- </span><span class="t3">({{ parseFloat(perCar).toFixed(2) }} per car)</span>
+				</div>
+			</div>
 		</div>
 	</div>
 </template>
@@ -42,7 +52,6 @@ const perCar = computed(() => {
 	const cars = props.game.getFlatCells().filter(c => c.value === 'car');
 	return (time.value / cars.length).toFixed(3);
 });
-const hintPlural = computed(() => `hint${(hints.value === 1) ? '' : 's'}`);
 
 async function saveGame() {
 	console.log('attempting to save game');
@@ -86,5 +95,42 @@ onMounted(async () => {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
+}
+
+.inner-container>div {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr;
+	gap: 0.2rem 0.9rem;
+	grid-template:
+		'hint-label hints'
+		'time-label times';
+}
+
+.hint-label {
+	grid-area: hint-label;
+	font-weight: bold;
+}
+
+.hints {
+	grid-area: hints;
+}
+
+.time-label {
+	grid-area: time-label;
+	font-weight: bold;
+}
+
+.times {
+	grid-area: times;
+}
+
+.d {
+	padding-left: 0.4rem;
+}
+
+.t2,
+.t3 {
+	font-size: 0.85rem;
 }
 </style>

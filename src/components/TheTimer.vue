@@ -40,3 +40,10 @@ onMounted(() => {
 	updateTimer();
 });
 </script>
+
+<style scoped>
+span {
+	font-size: 1.2rem;
+	font-weight: bold;
+}
+</style>
