@@ -16,9 +16,9 @@
 					Time:
 				</div>
 				<div class="times">
-					{{ parseFloat(time).toFixed(2) }} seconds<br />
-					<span class="d">- </span><span class="t2">({{ perCell }} per cell)</span><br />
-					<span class="d">- </span><span class="t3">({{ perCar }} per car)</span>
+					{{ time.display }} seconds<br />
+					<span class="d">- </span><span class="t2">({{ perCell.display }} per cell)</span><br />
+					<span class="d">- </span><span class="t3">({{ perCar.display }} per car)</span>
 				</div>
 			</div>
 		</div>
@@ -42,18 +42,27 @@ const props = defineProps({
 });
 const emit = defineEmits(['doneSaving']);
 const hints = ref(0);
-const time = ref(0);
+const time = ref({
+	save: 0,
+	display: 0,
+});
 const saving = ref(true);
-const perCell = ref(0);
-const perCar = ref(0);
+const perCell = ref({
+	save: 0,
+	display: 0,
+});
+const perCar = ref({
+	save: 0,
+	display: 0,
+});
 
 async function saveGame() {
 	console.log('attempting to save game');
 	try {
 		const entry = await db.games.add({
-			time: time.value,
-			timePerCell: perCell.value,
-			timePerCar: perCar.value,
+			time: time.value.save,
+			timePerCell: perCell.value.save,
+			timePerCar: perCar.value.save,
 			hintCount: hints.value,
 			date: new Date(),
 			board: props.game.getAs('value'),
@@ -72,12 +81,18 @@ async function saveGame() {
 }
 
 async function getGameStats() {
-	time.value = (props.game.getTime() / 1000).toFixed(2);
+	const t = (props.game.getTime() / 1000);
+	time.value.display = t.toFixed(2);
+	time.value.save = t.toFixed(3);
 	hints.value = props.game.hints.length;
 	const cells = props.game.getFlatCells();
-	perCell.value = (time.value / cells.filter(c => c.value !== 'charge').length).toFixed(2);
-	perCar.value = (time.value / cells.filter(c => c.value === 'car').length).toFixed(2);
-	await saveGame(time, hints, perCell, perCar);
+	const ps = (t / cells.filter(c => c.value !== 'charge').length);
+	perCell.value.display = ps.toFixed(2);
+	perCell.value.save = ps.toFixed(3);
+	const pc = (t / cells.filter(c => c.value === 'car').length);
+	perCar.value.display = pc.toFixed(2);
+	perCar.value.save = pc.toFixed(3);
+	await saveGame();
 }
 
 onMounted(async () => {
