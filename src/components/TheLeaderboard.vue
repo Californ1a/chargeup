@@ -4,6 +4,9 @@
 			<h2>Leaderboard</h2>
 		</div>
 		<div class="entry-headers">
+			<div class="entry-header count">
+				#
+			</div>
 			<div class="entry-header board-size">
 				Size
 			</div>
@@ -24,10 +27,13 @@
 			</div>
 		</div>
 		<div ref="entriesList" class="entries">
-			<div v-for="entry in board"
+			<div v-for="(entry, i) in board"
 				:key="entry.id"
 				class="entry"
 				:title="formatTimestamp(entry.date)">
+				<div class="count">
+					{{ i + 1 }}
+				</div>
 				<div class="board-size">
 					{{ entry.rows }} / {{ entry.cols }}
 				</div>
@@ -141,7 +147,7 @@ h2 {
 .entry,
 .entry-headers {
 	display: grid;
-	grid-template-columns: 1fr 0.5fr 1fr 1fr 1fr 1.5fr;
+	grid-template-columns: 0.6fr 1fr 0.5fr 1fr 1fr 1fr 1.5fr;
 	gap: 0;
 	text-align: center;
 	font-size: 0.8rem;
@@ -164,8 +170,8 @@ h2 {
 	padding-right: 0.5rem;
 }
 
-.entry-header.board-size {
-	padding-left: 0rem;
+.entry-header.count {
+	padding-left: 0.5rem;
 }
 
 .entry .time,
