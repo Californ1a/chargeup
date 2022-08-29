@@ -43,7 +43,10 @@
 				<div class="time-per-car">
 					{{ formatSec(entry.timePerCar) }}
 				</div>
-				<LBTimestamp :date="entry.date" :time-ago="timeAgo" class="date" />
+				<LBTimestamp :date="entry.date"
+					:pause="pause"
+					:time-ago="timeAgo"
+					class="date" />
 			</div>
 		</div>
 	</div>
@@ -65,6 +68,7 @@ const timeAgo = new TimeAgo('en-US');
 
 const entriesList = ref(null);
 const board = useObservable(liveQuery(async () => db.games.orderBy('date').toArray()));
+const pause = ref(false);
 
 useMutationObserver(entriesList, (mutations) => {
 	if (mutations[0]) {
@@ -95,6 +99,14 @@ function formatTimestamp(date) {
 function formatSec(t) {
 	return parseFloat(t).toFixed(2);
 }
+
+document.addEventListener('visibilitychange', () => {
+	if (document.visibilityState === 'visible') {
+		pause.value = false;
+	} else {
+		pause.value = true;
+	}
+});
 </script>
 
 <style scoped>
