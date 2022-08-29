@@ -91,7 +91,7 @@ import ToastNewGame from '@/components/toasts/ToastNewGame.vue';
 import db from '@/store/db';
 import tryPersistWithoutPromtingUser from '@/store/persistance';
 import Board from '@/classes/Board';
-import bfs from '@/util/bfs';
+import { bfsUnconnectedCharger, bfsEmptyTile } from '@/util/bfs';
 // import basicBoard from '@/assets/basicBoard';
 
 const game = reactive(new Board());
@@ -338,6 +338,8 @@ function editCell(cell, value, save = true) {
 	}
 
 	const chargers = game.getCellNeighbors(cell).filter(c => c.value === 'charge');
+
+	// unconnected chargers with all neighbors filled and at least one neighbor is a connected car
 	const unconnectedChargersWithAllNeighborsFilled = chargers.filter((c) => {
 		const hasConnection = c.displayConnection;
 		const neighbors = game.getCellNeighbors(c);
@@ -347,8 +349,7 @@ function editCell(cell, value, save = true) {
 		const chargerConnectedCars = carNeighbors.filter((n) => {
 			if (!n.displayConnection) return false;
 			const chargerNeighbors = game.getCellNeighbors(n.displayConnectedCharger);
-			const nullNeighbors = chargerNeighbors.filter(a => a.displayValue === null);
-			return nullNeighbors.length > 0;
+			return chargerNeighbors.length > 0;
 		});
 		return !hasConnection && filledNeighborsPercent === 1
 			&& carNeighbors.length > 0 && chargerConnectedCars.length > 0;
@@ -396,7 +397,7 @@ function editCell(cell, value, save = true) {
 		if (charger && !charger.displayConnection) {
 			Board.linkCarToCharger(cell, charger);
 		} else if (charger.displayConnection) {
-			const path = bfs(game, cell);
+			const path = bfsUnconnectedCharger(game, cell);
 			// console.log("seenIds", seenIds);
 			if (path && path.length > 0) {
 				for (let i = path.length - 1; i >= 0; i -= 2) {
@@ -419,21 +420,20 @@ function editCell(cell, value, save = true) {
 		cell.clearDisplayConnections();
 	} else if (unconnectedChargersWithAllNeighborsFilled.length > 0) {
 		// when placing a road next to an unconnected charger, completely blocking it,
-		// find connected cars next to the charger and swap their connection if
-		// their previously-connected charger has an open neighbor
-		unconnectedChargersWithAllNeighborsFilled.forEach((charger) => {
-			const neighbors = game.getCellNeighbors(charger);
-			const carNeighbors = neighbors.filter(n => n.displayValue === 'car');
-			const chargerConnectedCars = carNeighbors.filter((n) => {
-				const chargerNeighbors = game.getCellNeighbors(n.displayConnectedCharger);
-				const nullNeighbors = chargerNeighbors.filter(a => a.displayValue === null);
-				return n.displayConnection && nullNeighbors.length > 0;
-			});
-			const car = chargerConnectedCars[0];
-			const newCharger = car.displayConnectedCharger;
-			newCharger.clearDisplayConnections();
-			Board.linkCarToCharger(car, charger);
-		});
+		// bfs for connected chargers with an empty neighbor and swap their connections in the chain
+		for (const charge of chargers) {
+			const path = bfsEmptyTile(game, charge);
+			console.log('path', path);
+			if (path && path.length > 0) {
+				for (let i = path.length - 1; i >= 0; i -= 2) {
+					if (path[i - 1]) {
+						Board.linkCarToCharger(path[i - 1], path[i]);
+					} else {
+						path[i].clearDisplayConnections();
+					}
+				}
+			}
+		}
 	}
 
 	if (save) {
