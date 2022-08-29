@@ -155,31 +155,4 @@ onMounted(() => {
 .closebutton:focus {
 	outline: 1px dotted #bbb;
 }
-
-::-webkit-scrollbar {
-	width: 0.4rem;
-}
-
-::-webkit-scrollbar:horizontal {
-	height: 0.5em;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-	-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-	box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-	-webkit-border-radius: 10px;
-	border-radius: 10px;
-	background: #333;
-}
-
-::-webkit-scrollbar-thumb:window-inactive {
-	background: #000;
-}
 </style>

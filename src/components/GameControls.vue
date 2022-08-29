@@ -229,6 +229,8 @@ function updateCols(e) {
 
 input[type="range"] {
 	cursor: grab;
+	width: 100%;
+	min-width: 80px;
 }
 
 input[type="range"]:active {
