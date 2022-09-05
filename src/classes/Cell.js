@@ -8,7 +8,7 @@ export default class Cell {
 		this.value = value; // 🚗 ⛽
 		this.correct = false;
 		this.hover = false;
-		this.displayValue = null;
+		this.displayValue = (value === 'charge') ? 'charge' : null;
 		this.carIcon = carIcons[Math.floor(Math.random() * carIcons.length)];
 		this.connectedCharger = null;
 		this.connectedCar = null;

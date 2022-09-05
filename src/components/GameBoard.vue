@@ -424,7 +424,7 @@ function editCell(cell, value, save = true) {
 		for (const charge of chargers) {
 			const path = bfsEmptyTile(game, charge);
 			console.log('path', path);
-			if (path && path.length > 0) {
+			if (path && path.length > 1) {
 				for (let i = path.length - 1; i >= 0; i -= 2) {
 					if (path[i - 1]) {
 						Board.linkCarToCharger(path[i - 1], path[i]);
